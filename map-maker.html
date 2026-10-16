@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Map Maker</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;background:#14110c}
+fantasy-map-maker{display:block;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+</style></head><body>
+<fantasy-map-maker></fantasy-map-maker>
+<template id="mm-tpl"><style>
+:host{display:block;height:780px}
+:host(.mm-narrow){height:auto}
+*{box-sizing:border-box}
+.app{--bg:var(--mm-bg,#f3ecdc);--panel:var(--mm-panel,#e4d8bc);--ink:var(--mm-ink,#2d2417);--accent:var(--mm-accent,#8a4b1f);--line:var(--mm-line,#b9a77f);position:relative;display:flex;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 Georgia,serif;text-align:left;outline:none;overflow:hidden}
+.app[data-theme="dark"]{--bg:var(--mm-bg,#1c1812);--panel:var(--mm-panel,#2a241a);--ink:var(--mm-ink,#eadfc6);--accent:var(--mm-accent,#d49a5a);--line:var(--mm-line,#4a3f2c)}
+#side{width:260px;flex:none;height:100%;background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow-y:auto}
+#main{flex:1;min-width:0;height:100%;overflow-y:auto;padding:10px}
+.app.narrow{flex-direction:column;height:auto;overflow:visible}
+.app.narrow #side{width:100%;height:auto;border-right:0;border-bottom:1px solid var(--line)}
+.app.narrow #main{height:auto;overflow:visible;width:100%}
+.app.narrow #modal,.app.narrow #fmodal{position:fixed}
+h1{font-size:18px;margin:0 0 8px;color:var(--accent)}
+h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px;color:var(--accent)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+button,input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+button{cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px}
+button.on{outline:2px solid var(--accent);background:var(--panel)}
+.sw{width:14px;height:14px;border-radius:3px;border:1px solid #0006;flex:none}
+input[type=range]{width:100%;padding:0}input[type=text]{width:100%}
+input[type=color]{width:26px;height:26px;padding:0;flex:none}
+.frow{display:flex;gap:4px;margin-bottom:4px}.frow input[type=text]{flex:1;min-width:0}
+#wrap{overflow:auto;border:2px solid var(--line);border-radius:8px;background:#000}
+canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
+.bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}.bar button{justify-content:center}
+#info{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}#info[hidden]{display:none}.ihead{display:flex;gap:6px;margin-bottom:6px;align-items:center}.ihead input{flex:1;min-width:0}#iicon{font-size:26px}textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px}#iland{margin-top:8px;font-style:italic;opacity:.85;border-top:1px dashed var(--line);padding-top:6px}
+#tabs{margin:0 0 6px}#sumc{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}#sumc[hidden]{display:none}#tip{position:fixed;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:260px;white-space:pre-wrap;font-size:12px}#tip[hidden]{display:none}#fmodal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}#fmodal[hidden]{display:none}#fbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;width:min(460px,100%);max-height:90vh;overflow:auto;padding:14px}#modal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}#modal[hidden]{display:none}#mbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:14px}#mbox textarea{font:12px monospace}#pimg{max-width:100%;border-radius:6px;margin-top:6px}
+#hint{opacity:.7;font-size:12px;margin-top:6px}
+
+</style><div class="app" id="app" tabindex="0"><div id="side">
+<h1>🗺️ Map Maker</h1>
+<div class="grid" id="modes"></div>
+<div id="ptwrap" hidden><h2 id="pth">Planet type</h2><select id="ptype" style="width:100%"><option value="terran">🌍 Terran</option><option value="desert">🏜️ Desert world</option><option value="ice">🧊 Ice world</option><option value="volcanic">🌋 Volcanic</option><option value="toxic">☣️ Toxic / alien</option><option value="barren">🌑 Barren moon</option></select><button id="autod" hidden style="margin-top:6px;width:100%">✨ Auto-detect districts</button></div>
+<h2>Tool</h2>
+<div class="grid" id="tools"></div>
+<h2>Brush size: <span id="bs">3</span></h2>
+<input type="range" id="size" min="1" max="10" value="3">
+<h2>Biomes</h2><div class="grid" id="biomes"></div>
+<h2>Landmarks</h2><div class="grid" id="marks"></div>
+<h2>Paths</h2><div class="grid" id="paths"></div>
+<h2>Scale (1 cell =)</h2><div class="frow"><input type="number" id="scv" min="0.01" step="any" style="width:90px"><input type="text" id="scu" placeholder="unit"></div>
+<div class="frow"><span style="align-self:center;font-size:12px">Grid every</span><input type="number" id="gsz" value="5" min="1" step="1" style="width:64px"><span id="gtxt" style="align-self:center;font-size:12px"></span></div>
+<h2>Name (for landmark / label / path)</h2>
+<div class="frow"><input type="text" id="name" placeholder="e.g. Ironhold"><button id="rn" title="Random name for this mode">🎲</button></div>
+<h2>View</h2><div class="grid" id="vis"></div>
+<h2>Factions</h2><div id="facs"></div>
+<button id="addfac" style="margin-top:4px">＋ Add faction</button><button id="fweb" style="margin-top:4px">🕸️ Relations web</button><button id="autof" style="margin-top:4px">🎲 Auto-assign territories</button>
+<div id="globewrap" hidden><h2>Globe preview</h2><canvas id="globe" width="220" height="220" style="width:220px;height:220px;margin:auto;cursor:default"></canvas><input type="range" id="rot" min="0" max="100" value="0" title="Rotate"></div>
+</div>
+<div id="main">
+<div class="bar">
+<button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button id="gen">🎲 New random map</button><button id="pop" title="Add named landmarks and routes to this map">✨ Populate</button><select id="msize" title="Map size"><option value="64x40">Small</option><option value="96x60">Medium</option><option value="160x100">Large</option><option value="240x150">Huge</option></select>
+<button id="qsave">💾 Save</button><button id="proj">📁 Project</button><button id="leg">🧭 Legend</button><button id="demo" title="Load an example project: a fan-made Westeros and King's Landing">📜 Westeros demo</button>
+<button id="clear">🗑️ Clear</button>
+<button id="zout">➖</button><span id="zl" style="min-width:44px;text-align:center;align-self:center">100%</span><button id="zin">➕</button><button id="zreset">⤢ Fit</button><input type="text" id="find" list="finds" placeholder="🔎 Find…" style="width:130px"><datalist id="finds"></datalist>
+</div>
+<div class="bar" id="tabs"></div>
+<div id="wrap"><canvas id="c" width="1344" height="840"></canvas></div>
+<div id="info" hidden><div class="ihead"><span id="iicon" title="Click to change icon" style="cursor:pointer"></span><input type="text" id="iname" placeholder="Name"><button id="idel" title="Delete">🗑️</button><button id="iclose" title="Close">✕</button></div>
+<textarea id="idesc" rows="4" placeholder="Write the history, rumours, inhabitants…"></textarea><div style="margin-top:6px;display:flex;gap:6px"><select id="ilink" style="flex:1;min-width:0"></select><button id="iopen" hidden>↗ Open</button></div><div style="margin-top:6px"><button id="iflesh" title="Add atmosphere, a notable feature and a story hook">🪄 Flesh out description</button></div><div id="iland"></div></div>
+<div id="sumc" hidden></div>
+<div id="hint"></div>
+<div id="tip" hidden></div>
+<div id="fmodal" hidden><div id="fbox"></div></div>
+<div id="modal" hidden><div id="mbox">
+<div class="ihead"><b style="flex:1;font-size:16px">📁 Project</b><button data-a="close">✕</button></div>
+<h2>Project name</h2><div class="frow"><input type="text" id="pname"><button data-a="save">💾 Save slot</button></div>
+<div id="slots"></div>
+<h2>Maps in this project</h2><div id="mlist"></div>
+<h2>Export / import (JSON)</h2>
+<textarea id="jtxt" rows="4" placeholder="Export fills this box. Paste a project here to import it."></textarea>
+<div class="bar" style="margin-top:6px"><button data-a="exp">Export</button><button data-a="copy">Copy</button><button data-a="expdl">Save .json</button><button data-a="imp">Import from box</button><button data-a="csv">Pins CSV</button><button data-a="csvdl">Save .csv</button></div>
+<h2>Lore document</h2><div class="bar"><button data-a="lore">Generate</button><button data-a="lcopy">Copy</button><button data-a="ldl">Save .md</button></div>
+<textarea id="ltxt" rows="5"></textarea>
+<h2>Image</h2><div class="bar"><button data-a="png">Render PNG</button><button data-a="pngdl">Save PNG</button></div><img id="pimg" hidden alt="Map render">
+<div id="mmsg" style="margin-top:8px;font-style:italic"></div>
+<div class="bar" style="margin-top:10px"><button data-a="newproj">🆕 New project</button></div>
+</div></div>
+</div></div></template>
+<script>
+(function(){
+function run(host,root,app){
+const setTheme=()=>{const t=host.getAttribute('theme')||'auto';app.dataset.theme=t=='auto'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):t};setTheme();try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',setTheme)}catch(e){}
+const fit=()=>{const n=host.clientWidth>0&&host.clientWidth<700;app.classList.toggle('narrow',n);host.classList.toggle('mm-narrow',n)};fit();if(typeof ResizeObserver!='undefined')new ResizeObserver(fit).observe(host);
+root.addEventListener('pointerdown',e=>{if(!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))app.focus({preventScroll:true})});
+
+let W=96,H=60;const S=14,cv=root.getElementById('c'),ctx=cv.getContext('2d');
+let BIOMES=[],MARKS=[],FLAV=[];const FBIO=[["Ocean","#2b5d8a","w"],["Grassland","#7fb85a","v"],["Forest","#2f6b3a","t"],["Hills","#a6a05a","h"],["Mountains","#8a8a8a","m"],["Desert","#dcc47a","d"],["Snow","#eef3f7"],["Swamp","#4f6b4a","s"],["Wasteland","#6b3a2e"]];
+const FMARK=["🏰","🏘️","🏙️","⚓","🗼","🏛️","⛰️","🕳️","🌋","🐉","⚔️","🌲","⛪","🏚️"];
+let ter=new Uint8Array(W*H),fac=new Uint8Array(W*H),marks=[],
+facs=[{n:"Red Legion",c:"#d33b3b"},{n:"Azure Court",c:"#3b7bd3"},{n:"Gold Compact",c:"#d3a93b"},{n:"Verdant Pact",c:"#3bd36a"}],
+meas=null,mv=null,sc={v:6,u:"mi"},maps=[{id:"m0",name:"World Map",d:null}],cur="m0",proj="My World",back=[],ptp=0,dr=null,ms=1,mode="fantasy",ptype="terran",M=null,tool="pan",view={z:1,x:0,y:0},sel=null,biome=1,mark=0,fsel=1,undos=[],redos=[],bd=null,sv=null,grid=0,gsz=5,vis={f:1,p:1,r:1,m:1,n:1,s:1,k:0},fi=0,painting=false;
+const $=id=>root.getElementById(id);
+const hash=(x,y)=>{let h=(x*374761393+y*668265263)^(x*y*1274126177);h=(h^(h>>>13))*1274126177;return((h^(h>>>16))>>>0)/4294967295};
+const TOOLS=[["pan","✋ Pan / Inspect"],["biome","🖌️ Paint biome"],["erase","🧽 Erase"],["fill","🪣 Fill"],["mark","📍 Landmark"],["label","🔤 Label"],["path","〰️ Draw path"],["faction","🚩 Paint faction"],["unfac","⬜ Clear faction"],["region","🏷️ District"],["building","🏠 Building"],["measure","📏 Measure"],["survey","🔍 Survey area"],["remove","❌ Remove pin"]];
+function ui(){cv.style.cursor=tool=='pan'?'grab':'crosshair';$('modes').innerHTML=Object.keys(MODES).map(k=>`<button data-mo="${k}" class="${mode==k?'on':''}" style="justify-content:center">${MODES[k].n}</button>`).join('');
+ $('paths').innerHTML=pp().map((p,i)=>`<button data-pp="${i}" class="${tool=='path'&&ptp==i?'on':''}"><span class="sw" style="background:${p.c}"></span>${p.n}</button>`).join('');$('tools').innerHTML=TOOLS.map(t=>`<button data-t="${t[0]}" title="Shortcut: ${(HK[t[0]]||'').toUpperCase()}" class="${tool==t[0]?'on':''}">${t[1]}</button>`).join('');
+ $('biomes').innerHTML=BIOMES.map((b,i)=>`<button data-b="${i}" class="${biome==i?'on':''}"><span class="sw" style="background:${b[1]}"></span>${b[0]}</button>`).join('');
+ $('marks').innerHTML=MARKS.map((m,i)=>`<button data-m="${i}" class="${mark==i?'on':''}" style="justify-content:center;font-size:18px">${m}</button>`).join('');
+ $('vis').innerHTML=[['s','✨ Smooth edges'],['k','🖼️ Frame & compass'],['f','🚩 Factions'],['p','〰️ Paths'],['r','🏷️ Districts'],['m','📍 Pins'],['n','🔤 Names']].map(v=>`<button data-v="${v[0]}" class="${vis[v[0]]?'on':''}">${v[1]}</button>`).join('');$('vis').innerHTML+=`<button data-g="1" class="${grid?'on':''}">${['▦ Grid: off','▦ Grid: square','⬡ Grid: hex'][grid]}</button>`;$('facs').innerHTML=facs.map((f,i)=>`<div class="frow"><button data-f="${i+1}" class="${fsel==i+1?'on':''}" style="padding:4px"><span class="sw" style="background:${f.c}"></span></button><input type="text" data-fn="${i}" value="${esc(f.n)}"><input type="color" data-fc="${i}" value="${f.c}"><button data-fe="${i}" title="Details & relations" style="padding:4px">⚙️</button></div>`).join('');
+}
+root.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.t){tool=b.dataset.t}else if(b.dataset.b){biome=+b.dataset.b;tool='biome'}
+ else if(b.dataset.m){mark=+b.dataset.m;tool='mark'}else if(b.dataset.f){fsel=+b.dataset.f;tool='faction'}else if(b.dataset.mo){snap();applyMode(b.dataset.mo);setDims(W,H);generate()}else if(b.dataset.pp){ptp=+b.dataset.pp;tool='path'}else if(b.dataset.tab){openMap(b.dataset.tab,false)}else if(b.dataset.back){openMap(back.pop(),false)}else if(b.dataset.new){const id=mkMap('Map '+(maps.length+1));openMap(id,false)}else if(b.dataset.v){vis[b.dataset.v]=!vis[b.dataset.v];draw()}else if(b.dataset.g){grid=(grid+1)%3;draw()}else if(b.dataset.fe){openFac(+b.dataset.fe)}else return;ui()});
+root.addEventListener('input',e=>{const d=e.target.dataset;
+ if(d.fn!==undefined){facs[d.fn].n=e.target.value;draw()}
+ if(d.fc!==undefined){facs[d.fc].c=e.target.value;draw();ui()}});
+$('size').oninput=e=>$('bs').textContent=e.target.value;
+$('addfac').onclick=()=>{facs.push({n:"New Faction",c:"#"+Math.floor(hash(facs.length,7)*0xffffff).toString(16).padStart(6,'0')});fsel=facs.length;tool='faction';ui()};
+function shot(){return[ter.slice(),fac.slice(),JSON.stringify(marks),W,H,mode,ptype,JSON.stringify(facs)]}
+function snap(){undos.push(shot());redos=[];if(undos.length>30)undos.shift()}
+function restore(s){if(s[3]!=W||s[4]!=H)setDims(s[3],s[4]);if(s[5]!=mode||s[6]!=ptype){applyMode(s[5],s[6]);facs=JSON.parse(s[7])}ter=s[0];fac=s[1];marks=JSON.parse(s[2]);ui();select(null)}
+$('redo').onclick=()=>{const s=redos.pop();if(!s)return;undos.push(shot());restore(s)};
+$('undo').onclick=()=>{const s=undos.pop();if(!s)return;redos.push(shot());restore(s)};
+$('clear').onclick=()=>{snap();ter.fill(0);fac.fill(0);marks=[];select(null)};
+$('gen').onclick=()=>{snap();generate()};
+$('msize').onchange=e=>{const[w,h]=e.target.value.split('x').map(Number);snap();setDims(w,h);generate()};
+function setDims(w,h){W=w;H=h;ms=Math.max(1,W/96);cv.width=W*S;cv.height=H*S;ter=new Uint8Array(W*H);fac=new Uint8Array(W*H);marks=[];view={z:1,x:0,y:0};sel=null;meas=null;sv=null;$('sumc').hidden=true;$('info').hidden=true;$('zl').textContent='100%';$('msize').value=W+'x'+H;mkTex()}
+const lerp=(a,b,t)=>a+(b-a)*t,R=Math.random;
+function vn(x,y,ox,oy){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
+ return lerp(lerp(hash(xi+ox,yi+oy),hash(xi+1+ox,yi+oy),u),lerp(hash(xi+ox,yi+1+oy),hash(xi+1+ox,yi+1+oy),u),v)}
+function fbm(x,y,ox,oy,o){let s=0,a=1,t=0,f=1;for(let i=0;i<o;i++){s+=a*vn(x*f,y*f,ox+i*53,oy+i*97);t+=a;a*=.5;f*=2}return s/t}
+function nrm(a){let lo=1e9,hi=-1e9;for(const v of a){if(v<lo)lo=v;if(v>hi)hi=v}const d=hi-lo||1;for(let i=0;i<a.length;i++)a[i]=(a[i]-lo)/d}
+const PT={
+terran:{b:[["Ocean","#2b6fa0"],["Plains","#7fb85a"],["Jungle","#2f6b3a"],["Highlands","#a6a05a"],["Mountains","#8a8a8a"],["Desert","#dcc47a"],["Ice Cap","#eef3f7"],["Wetlands","#4f6b4a"],["Scorched Zone","#6b3a2e"]],dc:"wvthmd-sk",sea:[.4,.65],cb:[-.1,.15],mb:0,wt:[.85,1.3]},
+desert:{b:[["Salt Sea","#3a7f8f"],["Red Dust","#c1784a"],["Scrub","#8a8a4a"],["Mesas","#a85a38"],["Canyon Ridges","#7a4030"],["Dunes","#e2b274"],["Frost Caps","#f0e6e0"],["Oasis","#4fa36a"],["Glass Plains","#5a4a5a"]],dc:"w-thmd-sk",sea:[.05,.15],cb:[.2,.35],mb:-.3,wt:[.8,1.1]},
+ice:{b:[["Sub-ice Sea","#1f4a7a"],["Snowfield","#e8f1f8"],["Tundra","#7fa08f"],["Glacier","#bcd8ea"],["Ice Ridges","#8aa3b8"],["Bare Rock","#b7b0a8"],["Pack Ice","#ffffff"],["Cryo Bog","#5f7f8a"],["Cryovolcano","#7d5f8f"]],dc:"w-thmc-sk",sea:[.4,.65],cb:[-.55,-.35],mb:0,wt:[.75,1.1]},
+volcanic:{b:[["Magma Sea","#e0561a"],["Basalt Plain","#3a3330"],["Ash Forest","#4a3a30"],["Cinder Hills","#6b4a3a"],["Volcanoes","#8a2f1f"],["Sulfur Flats","#d4c23a"],["Cooled Crust","#8a8480"],["Tar Pits","#1d1a22"],["Lava Fields","#ff7a2a"]],dc:"w-thmd-sk",sea:[.2,.45],cb:[.15,.3],mb:-.15,wt:[.55,.75]},
+toxic:{b:[["Acid Sea","#3fae7f"],["Violet Moss","#8a5fb0"],["Glow Jungle","#2fb5a0"],["Spore Hills","#b06a9a"],["Crystal Spires","#7a6fe0"],["Ochre Barrens","#c29a4a"],["Frost Bloom","#c7e8ff"],["Spore Marsh","#6a8f3a"],["Dead Zone","#4a3a4a"]],dc:"w-thxd-sk",sea:[.4,.6],cb:[0,.15],mb:.1,wt:[.7,1]},
+barren:{b:[["Dark Maria","#3a3a44"],["Regolith","#9a9690"],["Ice Pockets","#c8dbe6"],["Highlands","#b5b0a8"],["Crater Rims","#7a7770"],["Bright Dust","#cfc9bd"],["Polar Ice","#eaf2f7"],["Rille Canyons","#5a5852"],["Impact Glass","#4a5a6a"]],dc:"-c-cmc-sk",sea:[.15,.3],cb:[-.2,.1],mb:-.45,wt:[.8,1.1]}};
+for(const k in PT){PT[k].wrap=1;PT[k].rim=0}
+const FANT={sea:[.36,.66],cb:[-.15,.2],mb:0,wt:[.72,1.22],rim:1};
+const PFLAV=[["A vast basin of liquid; its depths are unsurveyed and its tides strange.","Open fluid expanse where survey drones lose signal beneath the surface."],["Broad, level lowlands, ideal for landing sites and sprawling settlements.","Flat plains with stable ground, easy to survey and easier to build on."],["Dense native life blankets the ground; sensors struggle to see through it.","A thick ecosystem teeming with unclassified organisms."],["Rugged upland country, rich in minerals and hard to cross.","Rolling highlands, prime sites for mining outposts and relay towers."],["Towering ranges with thin air and perfect lines of sight for observatories.","Jagged summits, hostile to vehicles, valuable to anyone who holds them."],["Barren expanses of dust and grit; scanners report little but wind.","Scoured flats where storms bury equipment within days."],["Frozen terrain with a hard crust, cold enough to crack unprotected hulls.","Pale frostfields glitter under thin sunlight; water ice runs deep."],["Unstable ground and vents where the terrain shifts and sensors fault.","Treacherous terrain, rich in resources and lethal to heavy machinery."],["A hazard zone; instruments report anomalies and settlers avoid it.","Scarred ground marked by old catastrophe; entry is strongly discouraged."]];
+const SFLAV=[["Empty void between systems; jumps here are long and lonely.","Black, quiet space with only distant starlight for company."],["A drifting gas cloud that scatters sensors and hides fleets.","Luminous nebula, beautiful and a nightmare for navigation."],["A glowing stellar nursery where new stars are being born.","Ionised gas lights the region in vivid pinks and reds."],["Dense cosmic dust that dims starlight and blinds long-range scans.","A dark lane of dust; smugglers love it and navigators hate it."],["A tumbling belt of rock rich in ore and deadly to the careless.","A debris field where miners, pirates and hideouts all collide."],["A dense cluster of stars with bright skies and crowded trade routes.","Tightly packed stars make for short jumps and plentiful systems."],["Pulsar radiation scours this region; unshielded ships won't last.","Hard radiation saturates the area, blistering electronics."],["A gravity well that warps space; travel is slow and perilous.","Space bends dangerously here around a massive hidden object."],["A raging ion storm that fries systems and scatters ships.","Roiling charged plasma drifting unpredictably across the lanes."]];
+const KFLAV=[["Open sky between the islands; skyships ride the winds and great sky-creatures drift through the deep blue.","Wide empty sky where only airships cross and every horizon hides a cloud bank."],["A bank of thick cloud, perfect cover for raiders and smugglers.","Dense cloud that swallows sound and sight; navigators curse it, smugglers love it."],["A violent storm of lightning and shear; ships turn back or break.","Roiling thunderheads, lethal to unprepared hulls."],["Green island country with terraced fields and quiet settlements on the rock.","Sheltered meadowland, the breadbasket of the floating isles."],["Ancient woodland clinging to the island, silent and watchful.","Dense canopy where the old paths are guarded and strangers are unwelcome."],["Sheer cliffs and exposed stone, a natural fortress for whoever holds it.","Wind-scoured rock shelves ringed by sheer drops and docking spurs."],["Veins of glowing skystone hum here; valuable, and dangerous to linger near.","Glittering crystal deposits that help keep the islands aloft; prospectors flock here, and not all return."]];
+const MODES={
+fantasy:{n:'🏰 Fantasy',ic:'🌍',halo:{min:1,c:'rgba(255,255,255,.2)'},cs:' The sea lies close by, opening the way to ports and raiders.',b:FBIO,m:FMARK,get t(){return FFLAV},f:[{n:"Red Legion",c:"#d33b3b"},{n:"Azure Court",c:"#3b7bd3"},{n:"Gold Compact",c:"#d3a93b"},{n:"Verdant Pact",c:"#3bd36a"}]},
+planet:{n:'🪐 Sci-Fi Planet',ic:'🪐',halo:{min:1,c:'rgba(255,255,255,.18)'},cs:' A liquid basin lies close by, a source of water and a natural landing zone.',m:["🏙️","🏘️","🚀","⛏️","🔬","🏭","🛸","📡","⚡","🛡️","💀","🌋","🚧","🔭"],t:PFLAV,f:[{n:"Colonial Authority",c:"#3b7bd3"},{n:"Free Miners",c:"#d3a93b"},{n:"Corporate Syndicate",c:"#d33b3b"},{n:"Native Collective",c:"#3bd36a"}]},
+space:{n:'🌌 Space Map',ic:'🌌',soft:1,lod:1,b:[["Deep Space","#05060d","n"],["Nebula","#3a4a9a"],["Emission Nebula","#b04a8a"],["Dust Lane","#4a3a30"],["Asteroid Field","#6a6660","a"],["Star Cluster","#d9c98a","N"],["Radiation Zone","#4aa84a"],["Gravity Well","#3a1a5a"],["Ion Storm","#4ac8d8"]],m:["🟡","🟠","🔴","🔵","⚪","🪐","🛰️","🌀","🕳️","🚀","🛸","💀","☄️","⚔️"],t:SFLAV,f:[{n:"Terran Union",c:"#3b7bd3"},{n:"Kraxi Hegemony",c:"#d33b3b"},{n:"Free Traders",c:"#d3a93b"},{n:"Synth Collective",c:"#b36bff"}]},
+sky:{n:'☁️ Sky-World',ic:'☁️',cliff:1,halo:{min:3,c:'rgba(255,255,255,.24)'},cf:[3,4,5,6],cs:' The island edge is close; skyships can dock along the rim.',b:[["Open Sky","#6fb3e8"],["Cloud Bank","#e8eef6","g"],["Storm Front","#4a5570","z"],["Island Meadow","#86c46a","v"],["Floating Forest","#3f7f5a","t"],["Crag & Cliffs","#8c8479","m"],["Skystone Crystal","#9b6bd6","x"]],m:["⛵","🏰","🗼","🐋","⚒️","🌳","⛰️","🔥","💀","⚡","🏝️","🌪️","⚓","🏛️"],t:KFLAV,f:[{n:"Highborn Court",c:"#b79cff"},{n:"Windrider Clans",c:"#5bd0e0"},{n:"Stonehold Guild",c:"#e07a30"},{n:"Grove Wardens",c:"#3fae6a"},{n:"Free Skyports",c:"#e0c050"}]}};
+const SETFLAV=[["Open ground on the edge of things, trampled flat by foot and cart.","Unbuilt land, free for new stalls, tents or trouble."],["A main thoroughfare thick with foot traffic and rumours.","A worn track where everyone passes through, and everyone is watched."],["Dwellings packed close, where most of the settlement lives.","Homes and shelters crowded together, shared walls and shared gossip."],["A bustling hub of trade where deals are struck and news travels.","The social heart of the place: haggling, music and street food."],["The seat of authority and defence; guarded and rarely quiet.","A fortified stronghold from which the settlement is ruled or protected."],["Noisy workshops and labour yards that keep the place running.","Smoke, sparks and hammering; the settlement's livelihood is made here."],["Cultivated land and green space feeding the settlement.","Fields, gardens and pens, tended daily by those who live nearby."],["A reliable water source, the reason the settlement sits here.","Flowing or standing water, vital for drinking, trade and defence."],["The rough edge: slums, wreckage or contamination that locals avoid.","A neglected district of danger and desperation, best crossed in daylight."]];
+const TS={
+medieval:{b:[["Open Ground","#8fb36a"],["Streets","#b5a587"],["Houses","#9a6a48"],["Market Square","#d6b865"],["Walls & Keep","#7d7d85"],["Workshops","#6b5444"],["Farmland","#c9c46a"],["River & Moat","#3f78b0"],["Slums","#6a5545"]],dc:"-pr-Wrfwr",m:["🏰","⛪","🍺","⚒️","🏪","🏛️","⚓","🌾","🪦","⛲","🗼","🛡️","🏥","🚪"],f:[{n:"Town Guard",c:"#3b7bd3"},{n:"Merchant Guild",c:"#d3a93b"},{n:"Temple",c:"#b79cff"},{n:"Thieves' Guild",c:"#7a3a8a"}]},
+scifi:{b:[["Open Plating","#2a3340"],["Maglanes","#46536a"],["Habitat Blocks","#6b7a99"],["Commerce District","#e0a040"],["Command & Defense","#c04a4a"],["Industrial Zone","#6a6f78"],["Parks & Hydroponics","#3fb07a"],["Coolant Canal","#2b8fb5"],["Undercity","#7a3a8a"]],dc:"-lqqq-twk",m:["🚀","🏢","🔬","🏭","📡","⚡","🛡️","🏪","🚇","🌳","🛸","🏥","🔒","💧"],f:[{n:"Security Division",c:"#d33b3b"},{n:"Corporate Board",c:"#d3a93b"},{n:"Dockworkers' Union",c:"#3b7bd3"},{n:"Undercity Syndicate",c:"#b36bff"}]},
+nomad:{b:[["Open Steppe","#c9b57a"],["Trails","#a38a5a"],["Tents & Yurts","#c9855a"],["Gathering Circle","#e0b030"],["Elders' Camp","#8a4a7a"],["Craft Area","#7a6552"],["Herd Pens","#9db565"],["Oasis & Stream","#4a90d9"],["Wagon Ring","#5a4a3a"]],dc:"-pT-TrowW",m:["⛺","🔥","🐎","🐪","🛖","🪶","🧵","💧","🎪","🏺","🪵","🗡️","🐑","🌿"],f:[{n:"Elders' Council",c:"#b36bff"},{n:"Hunters",c:"#3fae6a"},{n:"Herders",c:"#d3a93b"},{n:"Traders",c:"#3b7bd3"}]},
+scrap:{b:[["Wasteland Dirt","#8a7a5a"],["Dirt Tracks","#6a5a40"],["Shacks","#8a6a4a"],["Trading Post","#d1903a"],["Barricades & Gate","#5a5f66"],["Scrapyard","#6e6a62"],["Gardens","#6a8a3a"],["Water Tanks","#3a7a9a"],["Toxic Pit","#4a5a2a"]],dc:"-pr-Wafwk",m:["🔩","⛽","🛠️","🔧","🏚️","🚧","📻","💧","🧪","🛡️","🍺","🚗","⚙️","💀"],f:[{n:"Gate Wardens",c:"#d33b3b"},{n:"Scrappers",c:"#e07a30"},{n:"Trader Cartel",c:"#d3a93b"},{n:"Outcasts",c:"#7a7a8c"}]}};
+const VO={planet:[["terran","🌍 Terran"],["desert","🏜️ Desert world"],["ice","🧊 Ice world"],["volcanic","🌋 Volcanic"],["toxic","☣️ Toxic / alien"],["barren","🌑 Barren moon"]],town:[["medieval","🏰 Medieval town"],["scifi","🏙️ Sci-fi city"],["nomad","⛺ Nomad camp"],["scrap","🔩 Scrap outpost"]]};
+const SCD={fantasy:{v:6,u:"mi"},planet:{v:50,u:"km"},space:{v:1,u:"ly"},sky:{v:2,u:"mi"},medieval:{v:2,u:"m"},scifi:{v:10,u:"m"},nomad:{v:2,u:"m"},scrap:{v:2,u:"m"}};
+MODES.town={n:'🏘️ Settlement',ic:'🏘️',m:[],t:SETFLAV,f:[]};
+function scUI(){$('scv').value=sc.v;$('scu').value=sc.u;gtxt()}
+function gtxt(){$('gtxt').textContent='= '+(+(gsz*sc.v).toPrecision(3))+' '+sc.u}
+$('scv').oninput=e=>{sc.v=+e.target.value>0?+e.target.value:1;gtxt();draw()};$('scu').oninput=e=>{sc.u=e.target.value;gtxt();draw()};$('gsz').oninput=e=>{gsz=Math.max(1,Math.round(+e.target.value)||5);gtxt();draw()};
+function drawMeas(){const a=meas.a,b=meas.b,d=Math.hypot(b[0]-a[0],b[1]-a[1])/S*sc.v;ctx.setLineDash([6,5]);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffd24a';for(const p of[a,b]){ctx.beginPath();ctx.arc(p[0],p[1],4*ms,0,7);ctx.fill()}ctx.textAlign='center';ctx.textBaseline='middle';text((d<10?d.toFixed(1):Math.round(d))+' '+sc.u,(a[0]+b[0])/2,(a[1]+b[1])/2-12*ms,15*ms,'#ffd24a')}
+function flood(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return;const t=ter[cy*W+cx];if(t==biome)return;const st=[cy*W+cx];while(st.length){const i=st.pop();if(ter[i]!=t)continue;ter[i]=biome;const x=i%W,y=i/W|0;if(x>0)st.push(i-1);if(x<W-1)st.push(i+1);if(y>0)st.push(i-W);if(y<H-1)st.push(i+W)}}
+function genTown(st){
+ const put=(x,y,v,z)=>{x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<W&&y<H&&(!z||ter[y*W+x]==0))ter[y*W+x]=v},
+ get=(x,y)=>{x=Math.round(x);y=Math.round(y);return x<0||y<0||x>=W||y>=H?-1:ter[y*W+x]},
+ rect=(x,y,w,h,v,z)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++)put(x+i,y+j,v,z)},
+ disc=(cx,cy,r,v,z)=>{for(let y=Math.floor(cy-r);y<=cy+r;y++)for(let x=Math.floor(cx-r);x<=cx+r;x++)if(Math.hypot(x-cx,y-cy)<=r)put(x,y,v,z)},
+ line=(x0,y0,x1,y1,v,wob,wd)=>{const dx=x1-x0,dy=y1-y0,l=Math.hypot(dx,dy)||1,n=Math.ceil(l*1.5)+1,ph=R()*9;for(let i=0;i<=n;i++){const t=i/n,o=Math.sin(t*5+ph)*wob,x=x0+dx*t-dy/l*o,y=y0+dy*t+dx/l*o;put(x,y,v);if(wd>1){put(x+1,y,v);put(x,y+1,v)}}},
+ nr=(x,y,r,v)=>{for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++)if(get(x+i,y+j)==v)return 1;return 0},
+ mn=Math.min(W,H),cx=W*(.42+R()*.16),cy=H*(.42+R()*.16),Rt=mn*(.28+R()*.14),T=6.2832,cs=Math.cos,sn=Math.sin;
+ ter.fill(0);
+ const river=(wid,wob)=>{const h=R()<.5,ph=R()*9,o=(R()-.5)*mn*.4;for(let i=0;i<=1000;i++){const t=i/1000,m=sn(t*4+ph)*mn*wob+sn(t*9+ph)*mn*wob*.3;h?disc(W*t,cy+o+m,wid,7):disc(cx+o+m,H*t,wid,7)}};
+ if(st=='medieval'){
+  if(R()<.75)river(1.1,.08);
+  const sp=3+Math.floor(R()*3),a0=R()*T;
+  for(let i=0;i<sp;i++){const a=a0+i*T/sp+(R()-.5)*.5;line(cx,cy,cx+cs(a)*Rt*1.9,cy+sn(a)*Rt*1.9,1,1.5)}
+  for(let a=0;a<T;a+=.5/(Rt*.55))put(cx+cs(a)*Rt*.55,cy+sn(a)*Rt*.55,1);
+  disc(cx,cy,3,3);const ka=R()*T;rect(cx+cs(ka)*Rt*.4-2,cy+sn(ka)*Rt*.4-2,5,5,4);
+  for(let y=Math.floor(cy-Rt);y<=cy+Rt;y++)for(let x=Math.floor(cx-Rt);x<=cx+Rt;x++){const d=Math.hypot(x-cx,y-cy);if(d>Rt||get(x,y)!=0||!nr(x,y,2,1)||R()>.8*(1-d/Rt*.5))continue;rect(x,y,1+(R()<.5),1+(R()<.4),R()<.14?5:2,1)}
+  if(R()<.8)for(let a=0;a<T;a+=.4/Rt){const x=cx+cs(a)*Rt*1.08,y=cy+sn(a)*Rt*1.08;if(get(x,y)==0)put(x,y,4)}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const d=Math.hypot(x-cx,y-cy);if(d>Rt*1.2&&d<Rt*2&&get(x,y)==0&&hash(x/4|0,y/4|0)>.5)put(x,y,6)}
+  for(let i=0,n=2+Math.floor(R()*3);i<n;i++){const a=R()*T,r=Rt*(1.12+R()*.2),sx=cx+cs(a)*r,sy=cy+sn(a)*r;for(let k=0;k<14;k++)put(sx+(R()-.5)*5,sy+(R()-.5)*5,8,1)}
+ }else if(st=='scifi'){
+  if(R()<.5)river(.9,.03);
+  const k=5+Math.floor(R()*3),ox=Math.floor(cx)%k,oy=Math.floor(cy)%k,Rc=Rt*1.35;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(Math.hypot(x-cx,y-cy)<=Rc&&(x%k==ox||y%k==oy))put(x,y,1);
+  line(0,cy,W-1,cy,1,0,2);line(cx,0,cx,H-1,1,0,2);
+  for(let by=oy+1;by<H;by+=k)for(let bx=ox+1;bx<W;bx+=k){const d=Math.hypot(bx+k/2-cx,by+k/2-cy);if(d>Rc)continue;const h=hash(bx,by);
+   rect(bx,by,k-1,k-1,d<Rt*.22?(h<.5?4:3):d<Rt*.7?(h<.3?3:h<.88?2:6):(h<.45?5:h<.75?2:h<.88?6:8),1)}
+ }else if(st=='nomad'){
+  if(R()<.6){if(R()<.5)river(.7,.07);else disc(cx+(R()-.5)*Rt*2.2,cy+(R()-.5)*Rt*2.2,2.5+R()*2,7)}
+  const cr=Rt*.75;
+  for(let i=0;i<3;i++){const a=R()*T;line(cx+cs(a)*cr*.4,cy+sn(a)*cr*.4,cx+cs(a)*Rt*3,cy+sn(a)*Rt*3,1,2.5)}
+  disc(cx,cy,2.3,3);rect(cx+3,cy-6,3,3,4);
+  for(let i=0;i<5;i++)put(cx-7+R()*3,cy+3+R()*3,5,1);
+  for(let r=4.5;r<=cr;r+=3){const n=Math.floor(T*r/2.7);for(let i=0;i<n;i++){const a=i/n*T+R()*.25;if(R()<.88)put(cx+cs(a)*r,cy+sn(a)*r,2,1)}}
+  for(let i=0,n=2+Math.floor(R()*2);i<n;i++){const a=R()*T,r=cr*(1.25+R()*.3);disc(cx+cs(a)*r,cy+sn(a)*r,2.5+R()*2,6,1)}
+  for(let a=0;a<T;a+=3/(cr*1.15))if(R()<.85)put(cx+cs(a)*cr*1.12,cy+sn(a)*cr*1.12,8,1);
+ }else{
+  const ph=R()*9,ph2=R()*9,rad=a=>Rt*(.9+.18*sn(a*3+ph)+.08*sn(a*5+ph2)),g=[R()*T,R()*T];
+  for(const a of g)line(cx+cs(a)*Rt*1.8,cy+sn(a)*Rt*1.8,cx,cy,1,2);
+  for(let a=0;a<T;a+=.35/Rt){if(g.some(q=>Math.abs(Math.atan2(sn(a-q),cs(a-q)))<.2))continue;const r=rad(a);put(cx+cs(a)*r,cy+sn(a)*r,4,1)}
+  for(let y=Math.floor(cy-Rt*1.3);y<=cy+Rt*1.3;y++)for(let x=Math.floor(cx-Rt*1.3);x<=cx+Rt*1.3;x++){const d=Math.hypot(x-cx,y-cy);if(d>=rad(Math.atan2(y-cy,x-cx))-1.2||get(x,y)!=0)continue;if(R()<.34&&d>3)put(x,y,2,1)}
+  rect(cx+cs(g[0])*Rt*.5-1,cy+sn(g[0])*Rt*.5-1,3,3,3);
+  const sa=R()*T;for(let i=0;i<20;i++)put(cx+cs(sa)*Rt*.55+(R()-.5)*7,cy+sn(sa)*Rt*.55+(R()-.5)*7,5);
+  for(let i=0;i<3;i++){const a=R()*T,r=Rt*.6*R();rect(cx+cs(a)*r,cy+sn(a)*r,3,3,6,1)}
+  const wa=R()*T;rect(cx+cs(wa)*Rt*.4,cy+sn(wa)*Rt*.4,2,2,7);
+  const pa=R()*T;disc(cx+cs(pa)*Rt*1.7,cy+sn(pa)*Rt*1.7,3,8,1);
+  for(let i=0;i<12;i++)put(cx+(R()-.5)*W*.9,cy+(R()-.5)*H*.9,5,1);
+ }}
+let legend=false;
+const RS=new WeakMap();function rset(m){let t=RS.get(m);if(!t){t=new Set(m.cells);RS.set(m,t)}return t}
+const SAN=[0,0,["Habitat Spire","Skyline Block","Lumen Court","Arcology","Haven Deck"],["Neon Exchange","Commerce Row","The Concourse","Trade Spine"],["Command Spire","Security Hub","Defense Grid"],["Fabrication Row","Reactor Works","Assembly Line","Cargo Yards"],["Hydroponic Gardens","Sky Park","Bio-Dome","Green Deck"],["Coolant Reach","Canal Run"],["The Undercity","Sump Levels","Lowtown","Rust Warrens"]];
+const AN=[0,0,["Old Quarter","Lanternside","Weavers' Row","Rookery","Highgate","Mill End","Crossing","Hearthside"],["Grand Market","Bazaar","Exchange","Traders' Circle","Fair Green"],["Citadel","Bastion","Command Ring","Wardens' Hold","Watch Walls"],["Forge Row","Foundry Quarter","The Works","Smiths' Yard","Tannery Row"],["Farmsteads","Green Terraces","Common Fields","Herd Meadow","Garden Ring"],["The Waterway","Canal Reach","Waterfront","Water Run"],["Shantytown","Undercroft","The Rot","Burnt Quarter","Ash Row"]];
+function mkReg(cells,b,n,d){let sx=0,sy=0;for(const j of cells){sx+=j%W;sy+=j/W|0}sx/=cells.length;sy/=cells.length;let best=cells[0],bd=1e9;for(const j of cells){const dd=Math.hypot(j%W-sx,(j/W|0)-sy);if(dd<bd){bd=dd;best=j}}return{reg:1,cells,b,n,d,i:'',l:false,x:(best%W+.5)*S,y:((best/W|0)+.5)*S}}
+function hitReg(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return -1;const ci=cy*W+cx;let b=-1,bs=1e9;marks.forEach((m,i)=>{if(m.reg&&m.cells.length<bs&&rset(m).has(ci)){bs=m.cells.length;b=i}});return b}
+function defRegion(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return;const h=hitReg(x,y);if(h>=0){select(h);return}
+ const b=ter[cy*W+cx],cells=[],seen=new Uint8Array(W*H),st=[cy*W+cx];seen[st[0]]=1;
+ while(st.length&&cells.length<6000){const j=st.pop();cells.push(j);const px=j%W,py=j/W|0;for(const q of[px>0?j-1:-1,px<W-1?j+1:-1,py>0?j-W:-1,py<H-1?j+W:-1])if(q>=0&&!seen[q]&&ter[q]==b){seen[q]=1;st.push(q)}}
+ const nm=$('name').value.trim();$('name').value='';marks.push(mkReg(cells,b,nm||BIOMES[b][0],''));select(marks.length-1)}
+function regText(m){const st=rset(m),inn=marks.filter(p=>!p.pts&&!p.reg&&!p.l&&p.n&&st.has(Math.min(H-1,p.y/S|0)*W+Math.min(W-1,p.x/S|0))).map(p=>p.i+' '+p.n);return `${(BIOMES[m.b]||['Area'])[0]} ${m.bld?'building':'district'}, ${m.cells.length} cells (about ${Math.round(m.cells.length*sc.v*sc.v)} ${sc.u}²).`+mixText(m)+(inn.length?` Contains: ${inn.join(', ')}.`:'')+' '}
+function drawReg(m,hl){if(m.bld&&m.r){const r=m.r;ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(r[0]*S,r[1]*S,r[2]*S,r[3]*S);ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.5*ms;ctx.strokeRect(r[0]*S,r[1]*S,r[2]*S,r[3]*S)}
+ if(hl){const st=rset(m);ctx.fillStyle='rgba(255,210,74,.28)';for(const j of m.cells)ctx.fillRect((j%W)*S,(j/W|0)*S,S,S);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2*ms;ctx.setLineDash([]);ctx.beginPath();
+  for(const j of m.cells){const cx=j%W,cy=j/W|0,x=cx*S,y=cy*S;if(cx==0||!st.has(j-1)){ctx.moveTo(x,y);ctx.lineTo(x,y+S)}if(cx==W-1||!st.has(j+1)){ctx.moveTo(x+S,y);ctx.lineTo(x+S,y+S)}if(cy==0||!st.has(j-W)){ctx.moveTo(x,y);ctx.lineTo(x+S,y)}if(cy==H-1||!st.has(j+W)){ctx.moveTo(x,y+S);ctx.lineTo(x+S,y+S)}}ctx.stroke()}
+ if(vis.n&&m.n&&(!M.lod||view.z>=1.6))lbl(m.n,m.x,m.y,(m.bld?11:14)*ms,'#ffe9a8',{it:1,pr:m.bld?6:4,kind:'reg'})}
+function split(cells,n){const px=j=>[j%W,j/W|0],sd=[cells[Math.floor(R()*cells.length)]];
+ while(sd.length<n){let bj=0,bd=-1;for(let t=0;t<Math.min(cells.length,500);t++){const j=cells[Math.floor(R()*cells.length)],a=px(j);let md=1e9;for(const q of sd){const c=px(q);md=Math.min(md,Math.hypot(a[0]-c[0],a[1]-c[1]))}if(md>bd){bd=md;bj=j}}sd.push(bj)}
+ const g=sd.map(()=>[]);for(const j of cells){const a=px(j);let bi=0,bd=1e9;sd.forEach((q,k)=>{const c=px(q),d=Math.hypot(a[0]-c[0],a[1]-c[1]);if(d<bd){bd=d;bi=k}});g[bi].push(j)}return g.filter(a=>a.length>=8)}
+function autoDistricts(){if(mode!='town')return;snap();marks=marks.filter(m=>!m.reg);const seen=new Uint8Array(W*H),used={};
+ for(let i=0;i<W*H;i++){const b=ter[i];if(seen[i]||b<2)continue;const cells=[],st=[i];seen[i]=1;
+  while(st.length){const j=st.pop();cells.push(j);const x=j%W,y=j/W|0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const q=yy*W+xx;if(!seen[q]&&ter[q]==b){seen[q]=1;st.push(q)}}}
+  if(cells.length<(b==2?30:10))continue;
+  for(const part of cells.length>150?split(cells,Math.min(6,Math.round(cells.length/110))):[cells]){const nm=(ptype=='scifi'&&SAN[b])||AN[b]||[],k=used[b]=(used[b]||0)+1,n=nm.length?nm[(k-1)%nm.length]+(k>nm.length?' '+Math.ceil(k/nm.length):''):BIOMES[b][0];marks.push(mkReg(part,b,n,FLAV[b][0]))}}
+ select(null)}
+$('autod').onclick=()=>{autoDistricts();flash('Districts detected: '+marks.filter(m=>m.reg).length+'. Click one to edit it.')};
+$('leg').onclick=e=>{legend=!legend;e.currentTarget.classList.toggle('on',legend);draw()};
+function drawLegend(){const k=ms,cnt=new Array(BIOMES.length).fill(0);for(const v of ter)cnt[v]++;const rows=[];
+ BIOMES.forEach((b,i)=>{if(cnt[i])rows.push([b[1],b[0],0])});
+ const fu=new Set(fac);facs.forEach((f,i)=>{if(fu.has(i+1))rows.push([f.c,f.n,1])});
+ new Set(marks.filter(m=>m.pts).map(m=>m.t)).forEach(t=>{const T=pp()[t];if(T)rows.push([T.c,T.n,2])});
+ ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);const pad=8*k,rh=16*k,w=172*k,h=pad*2+(rows.length+2.4)*rh,x0=10*k,y0=cv.height-h-10*k;
+ ctx.fillStyle='rgba(20,17,12,.85)';ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(x0,y0,w,h);ctx.fill();ctx.stroke();
+ ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#ffe9a8';ctx.font=`bold ${12*k}px Georgia,serif`;ctx.fillText((maps.find(m=>m.id==cur)||{}).name||'Map',x0+pad,y0+pad+rh/2);ctx.font=`${11*k}px Georgia,serif`;
+ rows.forEach((r,i)=>{const y=y0+pad+(i+1.4)*rh+rh/2;ctx.fillStyle=r[0];ctx.strokeStyle=r[0];
+  if(r[2]==2){ctx.lineWidth=3*k;ctx.beginPath();ctx.moveTo(x0+pad,y);ctx.lineTo(x0+pad+12*k,y);ctx.stroke()}else{ctx.fillRect(x0+pad,y-5*k,12*k,10*k);if(r[2]){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(x0+pad,y-5*k,12*k,10*k)}}
+  ctx.fillStyle='#fff';ctx.fillText(r[1],x0+pad+18*k,y)});
+ let L=1;for(const n of[1,2,5,10,20,50,100,200,500,1000,2000,5000])if(n*S*view.z<=w-2*pad)L=n;
+ const y=y0+h-pad-rh/2,bw=L*S*view.z;ctx.strokeStyle='#fff';ctx.lineWidth=2*k;ctx.beginPath();ctx.moveTo(x0+pad,y+4*k);ctx.lineTo(x0+pad,y-2*k);ctx.lineTo(x0+pad+bw,y-2*k);ctx.lineTo(x0+pad+bw,y+4*k);ctx.stroke();ctx.fillStyle='#fff';ctx.fillText(+(L*sc.v).toPrecision(3)+' '+sc.u,x0+pad+bw+6*k,y)}
+const REL=['Neutral','Allied','Friendly','Rival','At war'];
+function openFac(i){fi=i;const f=facs[i];if(!f)return;$('fbox').innerHTML=`<div class="ihead"><span class="sw" style="background:${f.c};width:20px;height:20px"></span><b style="flex:1;font-size:16px">${esc(f.n)}</b><button data-fa="1">✕</button></div><textarea id="fdesc" rows="4" placeholder="Goals, history, leadership, what they want…">${esc(f.d||'')}</textarea><h2>Relations</h2>`+(facs.length<2?'<i>Add more factions to set relations.</i>':facs.map((o,j)=>j==i?'':`<div class="frow"><span style="flex:1;align-self:center">${esc(o.n)}</span><select data-fr="${j}">${REL.map(r=>`<option${((f.rel||{})[j]||'Neutral')==r?' selected':''}>${r}</option>`).join('')}</select></div>`).join(''));$('fmodal').hidden=false}
+$('fmodal').onclick=e=>{if(e.target.id=='fmodal'||e.target.closest('[data-fa]'))$('fmodal').hidden=true};
+$('fmodal').addEventListener('input',e=>{const f=facs[fi];if(!f)return;if(e.target.id=='fdesc')f.d=e.target.value;else if(e.target.dataset.fr!==undefined){const j=+e.target.dataset.fr;(f.rel=f.rel||{})[j]=e.target.value;const o=facs[j];(o.rel=o.rel||{})[fi]=e.target.value}touch()});
+function finishBld(){const q=bd;bd=null;const cl=(v,mx)=>Math.max(0,Math.min(mx,(v/S)|0)),x0=cl(Math.min(q.a[0],q.b[0]),W-1),x1=cl(Math.max(q.a[0],q.b[0]),W-1),y0=cl(Math.min(q.a[1],q.b[1]),H-1),y1=cl(Math.max(q.a[1],q.b[1]),H-1),cells=[];
+ for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)cells.push(y*W+x);if(cells.length>2500){flash('Too large for a building. Use the District tool.');draw();return}
+ const nm=$('name').value.trim();$('name').value='';const m=mkReg(cells,ter[((y0+y1)>>1)*W+((x0+x1)>>1)],nm||'Building','');m.bld=1;m.i='🏠';m.r=[x0,y0,x1-x0+1,y1-y0+1];marks.push(m);select(marks.length-1)}
+function drawBd(){const q=bd,x0=Math.min(q.a[0],q.b[0]),y0=Math.min(q.a[1],q.b[1]),w=Math.abs(q.a[0]-q.b[0]),h=Math.abs(q.a[1]-q.b[1]),sx=Math.floor(x0/S)*S,sy=Math.floor(y0/S)*S;ctx.setLineDash([5,4]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(sx,sy,Math.ceil((x0+w)/S)*S-sx,Math.ceil((y0+h)/S)*S-sy);ctx.setLineDash([])}
+$('find').onfocus=()=>{$('finds').innerHTML=[...new Set(marks.filter(m=>m.n).map(m=>m.n))].map(n=>`<option value="${esc(n)}">`).join('')};
+$('find').onchange=e=>{const q=e.target.value.trim().toLowerCase();if(!q)return;let i=marks.findIndex(m=>(m.n||'').toLowerCase()==q);if(i<0)i=marks.findIndex(m=>(m.n||'').toLowerCase().includes(q));if(i<0)return flash('Nothing named "'+e.target.value+'" on this map');
+ const m=marks[i];view.z=Math.max(view.z,2.5);view.x=cv.width/2-m.x*view.z;view.y=cv.height/2-m.y*view.z;clampView();$('zl').textContent=Math.round(view.z*100)+'%';select(i)};
+let tex=null;
+function mkTex(){tex=document.createElement('canvas');tex.width=W;tex.height=H;const g=tex.getContext('2d'),im=g.createImageData(W,H),o1=Math.floor(R()*1000),o2=Math.floor(R()*1000);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=fbm(x*.11,y*.11,o1,o2,3),k=(y*W+x)*4;im.data[k]=im.data[k+1]=im.data[k+2]=v>.5?255:0;im.data[k+3]=Math.min(62,Math.abs(v-.5)*300)}
+ g.putImageData(im,0,0)}
+function rrect(x,y,w,h,r){if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h)}
+function drawSmooth(x0,x1,y0,y1){
+ const px0=Math.max(0,x0-1),px1=Math.min(W,x1+1),py0=Math.max(0,y0-1),py1=Math.min(H,y1+1),nb=BIOMES.length,town=mode=='town';
+ ctx.fillStyle=BIOMES[0][1];ctx.fillRect(x0*S,y0*S,(x1-x0)*S,(y1-y0)*S);
+ const L=Array.from({length:nb},()=>[]);
+ for(let y=py0;y<py1;y++)for(let x=px0;x<px1;x++){const b=ter[y*W+x];if(b)L[b].push(x,y)}
+ if(M.halo){ctx.fillStyle=M.halo.c;ctx.beginPath();for(let b=M.halo.min;b<nb;b++){const l=L[b];for(let i=0;i<l.length;i+=2){const cx=(l[i]+.5)*S,cy=(l[i+1]+.5)*S,r=S*.72+3;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}}ctx.fill()}
+ const order=town?[7,6,8,3,1,5,2,4]:Array.from({length:nb-1},(_,i)=>i+1);
+ for(const b of order){const l=L[b];if(!l||!l.length)continue;ctx.fillStyle=BIOMES[b][1];ctx.beginPath();
+  const kind=town?(b==1?1:(b==2||b==4||b==5)?2:0):0;
+  for(let i=0;i<l.length;i+=2){const x=l[i],y=l[i+1];
+   if(kind==2)rrect(x*S+.5,y*S+.5,S-1,S-1,3);
+   else{const cx=(x+.5)*S,cy=(y+.5)*S,r=S*(kind?.62:.72+(hash(x,y)-.5)*.12);ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}}
+  ctx.fill();
+  if(!town)for(const[a,al,t]of[[.7,.07,'255,255,255'],[.86,.07,'0,0,0']]){ctx.fillStyle=`rgba(${t},${al})`;ctx.beginPath();for(let i=0;i<l.length;i+=2){const x=l[i],y=l[i+1];if(hash(x*3+7,y*5+1)>a){const cx=(x+.5+(hash(x,y*2)-.5)*.4)*S,cy=(y+.5+(hash(y,x*2)-.5)*.4)*S,r=S*.62;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}}ctx.fill()}}
+ if(!town&&tex){ctx.imageSmoothingEnabled=true;ctx.drawImage(tex,0,0,W*S,H*S);const w=W*S,h=H*S,gr=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.75);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.2)');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h)}}
+function hover(e){const t=$('tip');if(tool!='pan'&&tool!='remove'){t.hidden=true;return}const[x,y]=pos(e);let h=hit(x,y);if(h<0)h=hitReg(x,y);const m=marks[h];if(!m||(!m.n&&!m.d)){t.hidden=true;return}
+ t.textContent=(m.pts?'〰️':m.reg?(m.i||'🏷️'):m.l?'🔤':m.i)+' '+(m.n||'Unnamed')+(m.d?'\n'+m.d.slice(0,160)+(m.d.length>160?'…':''):'');t.style.left=e.clientX+14+'px';t.style.top=e.clientY+14+'px';t.hidden=false}
+function drawFrame(){const k=ms,w=cv.width,h=cv.height;ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);
+ ctx.strokeStyle='rgba(232,217,168,.95)';ctx.lineWidth=4*k;ctx.strokeRect(5*k,5*k,w-10*k,h-10*k);ctx.lineWidth=1.2*k;ctx.strokeRect(11*k,11*k,w-22*k,h-22*k);
+ const nm=(maps.find(m=>m.id==cur)||{}).name||'Map';ctx.font=`italic bold ${22*k}px Georgia,serif`;const tw=ctx.measureText(nm).width+36*k;
+ ctx.fillStyle='rgba(20,17,12,.82)';ctx.fillRect(w/2-tw/2,16*k,tw,34*k);ctx.lineWidth=1.2*k;ctx.strokeRect(w/2-tw/2,16*k,tw,34*k);ctx.fillStyle='#ffe9a8';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(nm,w/2,34*k);
+ const cx=w-62*k,cy=h-62*k,R1=34*k,R2=11*k;ctx.fillStyle='rgba(20,17,12,.7)';ctx.beginPath();ctx.arc(cx,cy,R1+12*k,0,7);ctx.fill();ctx.beginPath();ctx.arc(cx,cy,R1+5*k,0,7);ctx.stroke();
+ for(let i=0;i<4;i++){const a=i*Math.PI/2-Math.PI/2;ctx.fillStyle=i==0?'#e05050':'#e8d9a8';ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*R1,cy+Math.sin(a)*R1);ctx.lineTo(cx+Math.cos(a+.6)*R2,cy+Math.sin(a+.6)*R2);ctx.lineTo(cx+Math.cos(a-.6)*R2,cy+Math.sin(a-.6)*R2);ctx.fill()}
+ ctx.fillStyle='#ffe9a8';ctx.font=`bold ${12*k}px Georgia,serif`;ctx.fillText('N',cx,cy-R1-17*k)}
+function openWeb(){const n=facs.length;$('fbox').innerHTML=`<div class="ihead"><b style="flex:1;font-size:16px">🕸️ Faction relations</b><button data-fa="1">✕</button></div>`+(n<2?'<i>Add at least two factions.</i>':'<canvas id="fwc" width="440" height="440" style="width:100%;max-width:440px;cursor:default"></canvas><div style="font-size:12px;margin-top:6px">Green: allied. Light green: friendly. Orange dashed: rival. Red dashed: at war. Set relations with the ⚙️ button on each faction.</div>');$('fmodal').hidden=false;if(n<2)return;
+ const g=$('fwc').getContext('2d'),P=facs.map((f,i)=>[220+Math.cos(i/n*6.2832-1.5708)*140,220+Math.sin(i/n*6.2832-1.5708)*140]),ST={Allied:['#3fae6a',5,[]],Friendly:['#9fd59a',3,[]],Rival:['#e0a030',3,[6,5]],'At war':['#d33b3b',4,[2,4]]};
+ facs.forEach((f,i)=>facs.forEach((o,j)=>{const r=(f.rel||{})[j];if(j<=i||!ST[r])return;g.strokeStyle=ST[r][0];g.lineWidth=ST[r][1];g.setLineDash(ST[r][2]);g.beginPath();g.moveTo(P[i][0],P[i][1]);g.lineTo(P[j][0],P[j][1]);g.stroke()}));
+ g.setLineDash([]);g.textAlign='center';g.textBaseline='middle';g.font='bold 12px Georgia,serif';
+ facs.forEach((f,i)=>{g.fillStyle=f.c;g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.arc(P[i][0],P[i][1],16,0,7);g.fill();g.stroke();const a=i/n*6.2832-1.5708;g.fillStyle=getComputedStyle(app).color;g.fillText(f.n,P[i][0]+Math.cos(a)*(34+f.n.length*2),P[i][1]+Math.sin(a)*30)})}
+$('fweb').onclick=openWeb;
+// ---------- names & populate
+const PK=a=>a[Math.floor(R()*a.length)];
+const FP=["Ash","Oak","Raven","Storm","Iron","Gold","Silver","Frost","Thorn","Wolf","Hollow","Bright","Stone","Elder","Mist","Red","Black","White","High","Low","Fair","Grey","Sun","Moon"],FS=["ford","haven","wick","stead","hold","gate","mere","vale","crest","burn","moor","fall","watch","reach","bridge","port","ton","helm","wood","field"];
+const AP=["Aer","Cirr","Nim","Zeph","Sol","Lum","Vel","Ail","Bor","Cael","Oriel","Tem"],AS=["holm","reach","rest","spire","haven","drift","crest","perch","hollow","landing"];
+const TA=["Gilded","Drunken","Laughing","Sleeping","Rusty","Silver","Crimson","Wandering","Merry","Broken"],TN=["Stag","Goose","Anchor","Lantern","Dragon","Boar","Crown","Barrel","Raven","Mug"],NV=["Helix","Zenith","Orion","Vanta","Nova","Argent"];
+function randName(){if(mode=='sky')return PK(AP)+PK(AS);if(mode=='space')return sname();if(mode=='planet')return sname()+' '+PK(['Colony','Base','Landing','Outpost','Station']);
+ if(mode=='town'){if(ptype=='medieval')return 'The '+PK(TA)+' '+PK(TN);if(ptype=='scifi')return PK(NV)+' '+PK(['Tower','Exchange','Cantina','Spire','Works']);if(ptype=='nomad')return PK(['Elder','Swift','Grey','Red','Wise'])+' '+PK(['Fire','Horse','Wind','Hawk','Wolf']);return PK(['Rust','Scrap','Dust','Cinder','Wreck'])+' '+PK(['Yard','Gate','Depot','Cup','Row'])}
+ return PK(FP)+PK(FS)}
+$('rn').onclick=()=>{$('name').value=randName()};
+function pickWeighted(n,minD,wf){const out=[],P=marks.filter(m=>!m.pts&&!m.reg).map(m=>[m.x/S,m.y/S]),cand=[],wt=[];
+ for(let y=1;y<H-1;y++)for(let x=1;x<W-1;x++){const w=wf(x,y,ter[y*W+x]);if(w>0&&!P.some(p=>Math.abs(p[0]-x)<minD&&Math.abs(p[1]-y)<minD&&Math.hypot(p[0]-x,p[1]-y)<minD)){cand.push(y*W+x);wt.push(w)}}
+ for(let k=0;k<n&&cand.length;k++){let tot=0;for(const w of wt)tot+=w;if(tot<=0)break;let r=R()*tot,i=0;while(i<wt.length-1&&r>wt[i]){r-=wt[i];i++}
+  const x=cand[i]%W,y=cand[i]/W|0;out.push([x,y]);for(let q=0;q<cand.length;q++)if(wt[q]&&Math.hypot(cand[q]%W-x,(cand[q]/W|0)-y)<minD)wt[q]=0}
+ return out}
+function link(a,b,t,bad){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;for(let k=1;k<12;k++){const x=Math.round(a[0]+dx*k/12),y=Math.round(a[1]+dy*k/12);if(bad(ter[y*W+x]))return 0}
+ const nx=-dy/L,ny=dx/L,o1=(R()-.5)*L*.18,o2=(R()-.5)*L*.18,P=[a,[a[0]+dx*.33+nx*o1,a[1]+dy*.33+ny*o1],[a[0]+dx*.66+nx*o2,a[1]+dy*.66+ny*o2],b].map(p=>[(p[0]+.5)*S,(p[1]+.5)*S]);
+ marks.push({pts:P,t,n:'',d:'',x:(P[1][0]+P[2][0])/2,y:(P[1][1]+P[2][1])/2,i:'',l:false});return 1}
+function mst(pts,extra,maxD){const n=pts.length,E=[],ed=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)ed.push([Math.hypot(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1]),i,j]);ed.sort((a,b)=>a[0]-b[0]);
+ const par=[...Array(n).keys()],f=i=>par[i]==i?i:par[i]=f(par[i]);for(const[d,i,j]of ed){if(f(i)!=f(j)){par[f(i)]=f(j);E.push([i,j])}else if(d<maxD&&R()<extra)E.push([i,j])}return E}
+const VEN={
+medieval:[['🍺',[3,2],2,()=>'The '+PK(TA)+' '+PK(TN),'A noisy tavern full of rumours.'],['⛪',[2,3],1,()=>PK(['Temple of ','Chapel of '])+PK(['the Dawn','Saint Orrin','the Three Sisters','the Quiet Flame']),'A place of worship and quiet charity.'],['⚒️',[5],1,()=>PK(['Ironhand','Brightanvil','Old Hob','Grimsby'])+"'s Smithy",'A busy smithy ringing with hammers.'],['🏛️',[3],1,()=>'Guildhall of '+PK(['Merchants','Weavers','Smiths','Bakers']),'Where the guild meets and settles disputes.'],['🛡️',[4],1,()=>'Barracks','Home to the town watch.'],['🏥',[2],1,()=>"The Healer's House",'Herbs, bandages and kindly advice.'],['🪦',[0],1,()=>'Old Graveyard','A quiet graveyard outside the walls.'],['🌾',[6],1,()=>PK(FP)+' Mill','A mill grinding the local harvest.'],['⚓',[7],1,()=>'The Docks','Boats and barges unload here.']],
+scifi:[['🏪',[3],2,()=>PK(NV)+' Exchange','A bustling trade floor.'],['🏢',[3,4],1,()=>PK(NV)+' Tower','A corporate tower dominating the skyline.'],['🔬',[2,5],1,()=>'Lab '+sname(),'A research lab with restricted access.'],['🏭',[5],1,()=>'Fabricator '+sname(),'Automated fabrication lines.'],['⚡',[5],1,()=>'Reactor '+PK(['One','Two','Prime']),'The city power plant.'],['🛡️',[4],1,()=>'Security Hub','Command centre of the security division.'],['🏥',[2],1,()=>'Medbay '+PK(['North','Central','Low']),'A busy public medical bay.'],['🌳',[6],1,()=>'Arboretum','A pocket of green under glass.'],['🚇',[1],1,()=>'Transit Hub','Maglane interchange.'],['🚀',[0],2,()=>'Landing Pad '+PK(['A','B','C','7','12']),'Shuttles come and go from this pad.'],['💧',[7],1,()=>'Water Works','Coolant and water reclamation.']],
+nomad:[['⛺',[4],1,()=>"Chieftain's Tent",'The largest tent in camp, hung with banners.'],['🔥',[3],1,()=>'Council Fire','Where decisions and stories are shared.'],['🐎',[6],1,()=>'Horse Lines','Tethered horses and riding gear.'],['🐑',[6],1,()=>'Herd Pens','Livestock kept close for the night.'],['🪶',[2],1,()=>"Shaman's Tent",'Charms, herbs and quiet counsel.'],['🧵',[5],1,()=>'Weavers','Felt, rope and woven goods.'],['💧',[7],1,()=>'The Well','The reason the camp is here.'],['🎪',[3],1,()=>'Gathering Tent','Feasts and meetings happen under this canopy.'],['🏺',[2],1,()=>"Trader's Wagon",'A travelling merchant with odd wares.']],
+scrap:[['🛠️',[5],2,()=>PK(['Rust','Scrap','Cinder'])+' Yard','Salvage sorted by hand and by greed.'],['🏪',[3],1,()=>'Trading Post','Barter only; no questions asked.'],['🛡️',[4],1,()=>'Main Gate','Guarded day and night.'],['⛽',[5],1,()=>'Fuel Depot','Fuel is worth more than gold here.'],['💧',[7],1,()=>'Water Tanks','Rationed water, tightly guarded.'],['🍺',[2],1,()=>'The '+PK(['Rusty','Last','Broken'])+' Cup','A bar built from wreckage.'],['📻',[2],1,()=>'Radio Shack','Broadcasts news and static.'],['💀',[8],1,()=>'The Pit','Toxic ground nobody visits twice.']]};
+function populate(){snap();const n0=marks.length,coast=(x,y)=>{for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const xx=x+i,yy=y+j;if(xx>=0&&yy>=0&&xx<W&&yy<H&&ter[yy*W+xx]==0)return 1}return 0},
+ used=new Set(marks.map(m=>m.n).filter(Boolean)),put=(c,i,n,d)=>{let u=n,k=1;while(used.has(u))u=n+' '+(++k);used.add(u);marks.push({x:(c[0]+.5)*S,y:(c[1]+.5)*S,i,n:u,l:false,d})};
+ if(mode=='fantasy'){const nT=Math.max(6,Math.round(W*H/450)),T=pickWeighted(nT,7,(x,y,b)=>b?({1:3,2:1,3:1.5,5:.4,6:.2,7:.3,8:.1}[b]||0)*(coast(x,y)?2:1):0);
+  T.forEach((c,k)=>{const cs=coast(c[0],c[1]),cap=k<2,port=!cap&&cs&&R()<.5,pop=cap?12000+Math.floor(R()*18000):port?2000+Math.floor(R()*4000):200+Math.floor(R()*1500);
+   put(c,cap?'🏰':port?'⚓':'🏘️',(port?PK(['Port ','']):cap?'':PK(['','','Fort ']))+PK(FP)+PK(FS),`${cap?'A walled capital':port?'A busy harbour town':'A farming settlement'} of roughly ${pop.toLocaleString()} people.${cs&&!port?' It lies near the coast.':''}`)});
+  pickWeighted(Math.max(2,Math.round(nT/3)),6,(x,y,b)=>({3:2,4:3,7:1,8:2,2:1}[b]||0)).forEach(c=>{const k=PK([['🕳️',()=>sname()+' Caverns','A dark cave mouth; locals tell of things that live inside.'],['🏚️',()=>'Ruins of '+sname(),'Crumbling ruins from a forgotten age.'],['🗼',()=>sname()+' Spire','A lonely tower, abandoned or perhaps not.'],['🐉',()=>sname()+"'s Lair",'Scorched earth and old bones mark a great beast’s lair.']]);put(c,k[0],k[1](),k[2])});
+  pickWeighted(Math.max(1,Math.round(nT/6)),8,(x,y,b)=>b==2?1:0).forEach(c=>put(c,'🌲',PK(FP)+' Grove','An ancient grove that locals avoid after dark.'));
+  const tw=T.filter((c,k)=>true);mst(tw,.3,16).forEach(([i,j])=>link(tw[i],tw[j],1,b=>b==0||b==4))}
+ else if(mode=='planet'){const nC=Math.max(4,Math.round(W*H/900)),cap=pickWeighted(1,1,(x,y,b)=>({1:3,2:1,5:.6}[b]||0)),it=[];
+  cap.forEach(c=>{put(c,'🏙️',sname()+' City',"The planet's largest settlement and administrative hub.");it.push(c)});
+  [['⛏️','Mine',{3:3,4:2,5:1},'A mining outpost digging into rich ore veins.'],['🔬','Research Station',{6:3,5:1,8:2,4:1},'A research station studying the local environment.'],['📡','Relay',{4:3,3:1},'A communications relay on high ground.'],['🛡️','Outpost',{1:1,2:1,3:1,5:1},'A fortified outpost watching the frontier.']].forEach(sp=>pickWeighted(Math.max(1,Math.round(nC/3)),6,(x,y,b)=>sp[2][b]||0).forEach(c=>{put(c,sp[0],`${sname()} ${sp[1]}`,sp[3]);it.push(c)}));
+  if(cap[0])pickWeighted(1,2,(x,y,b)=>b&&Math.hypot(x-cap[0][0],y-cap[0][1])<7?1:0).forEach(c=>put(c,'🚀','Spaceport','Landing fields and cargo sheds.'));
+  mst(it,.25,18).forEach(([i,j])=>link(it[i],it[j],1,b=>b==0))}
+ else if(mode=='space'){const ST=['🟡','🟠','🔴','🔵','⚪'],st=marks.filter(m=>!m.pts&&!m.reg&&ST.includes(m.i)),pts=st.map(m=>[Math.floor(m.x/S),Math.floor(m.y/S)]);
+  st.forEach(m=>{if(R()<.2)marks.push({x:m.x+14,y:m.y+10,i:'🛰️',n:`${m.n} Station`,l:false,d:'A trade and refuelling station in orbit.'})});
+  pickWeighted(4,5,(x,y,b)=>b<5?1:0).forEach(c=>put(c,PK(['💀','💀','☄️']),PK(['Derelict ','Wreck of the ','Drifting '])+sname(),'Adrift for a long time. Salvagers whisper about what is still aboard.'));
+  pickWeighted(2,8,(x,y,b)=>b<5?1:0).forEach(c=>put(c,'⚔️','Battle of '+sname(),'Scorched hulls mark a famous clash.'));
+  mst(pts,.08,6).forEach(([i,j])=>link(pts[i],pts[j],0,b=>b==7))}
+ else if(mode=='sky'){const seen=new Uint8Array(W*H),isl=[];
+  for(let i=0;i<W*H;i++){const b=ter[i];if(seen[i]||b<3||b>6)continue;const cells=[],st=[i],cnt={};seen[i]=1;
+   while(st.length){const j=st.pop();cells.push(j);cnt[ter[j]]=(cnt[ter[j]]||0)+1;const x=j%W,y=j/W|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const q=yy*W+xx;if(!seen[q]&&ter[q]>=3&&ter[q]<=6){seen[q]=1;st.push(q)}}}
+   if(cells.length>=10)isl.push({cells,cnt})}
+  isl.sort((a,b)=>b.cells.length-a.cells.length);const cs=[];
+  isl.slice(0,60).forEach((o,ix)=>{const r=mkReg(o.cells,3,'',''),c=[Math.floor(r.x/S),Math.floor(r.y/S)],dom=+Object.keys(o.cnt).sort((a,b)=>o.cnt[b]-o.cnt[a])[0],ic=ix<3?'🏛️':dom==4?'🌳':dom==5?'⛰️':dom==6?'⚡':'🏝️';
+   put(c,ic,PK(AP)+PK(AS),`An island of about ${o.cells.length} cells (${Math.round(o.cells.length*sc.v*sc.v)} ${sc.u}²), mostly ${BIOMES[dom][0].toLowerCase()}.`);cs.push(c)});
+  mst(cs,.2,22).forEach(([i,j])=>link(cs[i],cs[j],0,()=>false))}
+ else if(mode=='town'){const k=Math.sqrt(W*H/5760);for(const v of VEN[ptype]||[])pickWeighted(Math.max(1,Math.round(v[2]*k)),3,(x,y,b)=>v[1].includes(b)?1:0).forEach(c=>put(c,v[0],v[3](),v[4]))}
+ select(null);flash(`Added ${marks.length-n0} items. Undo removes them.`)}
+$('pop').onclick=populate;
+function nearText(m){if(m.pts)return '';const D=['E','SE','S','SW','W','NW','N','NE'],P=marks.filter(p=>p!==m&&!p.pts&&!p.reg&&!p.l&&p.n).map(p=>({p,d:Math.hypot(p.x-m.x,p.y-m.y)/S*sc.v,a:Math.atan2(p.y-m.y,p.x-m.x)})).sort((a,b)=>a.d-b.d).slice(0,3);
+ return P.length?' Nearest: '+P.map(o=>`${o.p.n} (${o.d<10?o.d.toFixed(1):Math.round(o.d)} ${sc.u} ${D[((Math.round(o.a/Math.PI*4)%8)+8)%8]}${mode=='fantasy'&&sc.u=='mi'?`, about ${(o.d/24).toFixed(1)} days on foot`:''})`).join('; ')+'.':''}
+$('iicon').onclick=()=>{const m=marks[sel];if(!m||m.pts||m.reg||m.l)return;snap();m.i=MARKS[(MARKS.indexOf(m.i)+1)%MARKS.length];$('iicon').textContent=m.i;draw()};
+const NPC=["Marta","Orlin","Veska","Dray","Kessa","Tobin","Ilyra","Garrick","Nessa","Hadrik"],TIT=["the Elder","the Quiet","Redhand","of Three Rivers","the Lame","Ironbrow","the Younger"];
+const ATM={f:["Smoke curls skyward and the air smells of woodsmoke and wet stone.","Travellers speak quietly here, as if the walls were listening.","Banners snap in the wind, faded but proud.","A bell tolls somewhere nearby, though nobody admits to ringing it."],s:["Status lights blink steadily and the air tastes of recycled metal.","A low hum runs through everything, felt more than heard.","Signage flickers in three languages, one of them long out of date.","Docking clamps echo through the structure at odd hours."],r:["Wind rattles loose sheet metal and everything smells of oil and dust.","Generators cough and stutter; nobody sleeps deeply here.","Salvaged lamps hang from every post, each a different colour."]};
+const FEAT={'🏰':'The keep is old, with a garrison larger than its size suggests.','🏘️':'Most households farm, with one stubborn family who keeps the old ways.','⚓':'The harbour never sleeps; smugglers and honest traders share the same quay.','🕳️':'Cold air breathes from the opening, and scratch marks line the stone.','🏚️':'Half the roof has fallen in, but someone has swept the doorstep recently.','🗼':'A lamp burns at the top at night, though the stairs are said to be sealed.','🐉':'Bones and slag glass litter the approach.','🌲':'The trees here grow in suspiciously straight rows.','🍺':'The ale is watered down, but the stories are not.','⛪':'Pilgrims leave small offerings by the door.','⚒️':'The forge fire has not gone out in living memory.','🛡️':'Guards rotate often, and nobody stays long enough to be trusted.','🏛️':'Marble columns, newer than the foundations beneath them.','🏝️':'A narrow rope bridge links the highest ledges.','🌳':'Roots as thick as ship masts grip the rock.','⛰️':'Wind howls through the crags and carries voices that are not there.','⚡':'Crystals hum and glow, and compasses spin in their cases.','🟡':'A steady yellow star with a crowded inner system.','🟠':'An orange dwarf with a few quiet, long-settled worlds.','🔴':'A dim red dwarf; colonists huddle near its few warm worlds.','🔵':'A blazing blue giant whose radiation makes the inner worlds unlivable.','⚪':'A faint white dwarf, the ember of a much older system.','🛰️':'Traffic control is overworked and underpaid.','💀':'Hull breaches and drifting cargo; something has already been here.','🏙️':'Towers crowd the skyline and the streets never empty.','⛏️':'Rattling lifts descend into tunnels that go deeper than the maps say.','🔬':'Staff here speak in guarded half-sentences.','🚀':'Cargo cranes swing day and night over scarred landing pads.','🌀':'Ships that use the gate report a taste of metal and a sense of being watched.'};
+const HOOK=["Rumour says {X} has been meeting agents of {F} here after dark.","A reward is posted for anyone who can recover something lost near {N}.","Locals blame {N}'s recent troubles on a stranger nobody remembers arriving.","{X}, who runs the place, owes a dangerous debt and is looking for hired help.","Strange lights have been seen around {N} for several nights running.","A rival claims {N} was built over an older, forbidden site."];
+function fleshOut(m){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),fi=fac[cy*W+cx],fo=fi&&facs[fi-1]?facs[fi-1]:null,F=fo?fo.n:'a local faction',sci=mode=='planet'||mode=='space'||(mode=='town'&&ptype=='scifi'),k=sci?'s':(mode=='town'&&ptype=='scrap')?'r':'f',N=m.n||'this place',X=sci?sname():PK(NPC)+' '+PK(TIT);
+ const riv=fo?facs.filter((f,j)=>['At war','Rival'].includes((fo.rel||{})[j])).map(f=>f.n):[];
+ return [PK(ATM[k]),m.pts?PK(['Travellers on this route complain of tolls, patrols and worse.','The way is well worn, and well watched.','Weather can close this route for days at a time.']):(FEAT[m.i]||'It has stood here longer than anyone can say.'),fo?`It lies under the sway of ${F}${riv.length?`, though ${riv[0]} contests it`:''}.`:'',PK(HOOK).replace('{X}',X).replace('{F}',F).replace('{N}',N)].filter(Boolean).join(' ')}
+$('iflesh').onclick=()=>{const m=marks[sel];if(!m)return;snap();m.d=(m.d?m.d.trim()+'\n\n':'')+fleshOut(m);$('idesc').value=m.d;touch()};
+function csvAll(){const c0=cur,u=undos,u2=redos,rows=[['map','kind','icon','name','x','y','unit','terrain','faction','description','links_to']];stash();
+ for(const id of maps.map(x=>x.id)){openMap(id,false);const mp=maps.find(x=>x.id==cur);for(const m of marks){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),f=fac[cy*W+cx];
+  rows.push([mp.name,m.pts?'path':m.bld?'building':m.reg?'district':m.l?'label':'pin',m.pts?'':m.i,m.n||'',+(m.x/S*sc.v).toFixed(1),+(m.y/S*sc.v).toFixed(1),sc.u,BIOMES[ter[cy*W+cx]][0],f&&facs[f-1]?facs[f-1].n:'',(m.d||'').replace(/\s+/g,' '),(maps.find(x=>x.id==m.link)||{}).name||''])}}
+ openMap(c0,false);undos=u;redos=u2;return rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')}
+function autoFactions(){const n=facs.length;if(!n)return;snap();const mn=Math.min(W,H),ok=(x,y)=>{const b=ter[y*W+x];return mode=='sky'?b>=3&&b<=6:mode=='space'?true:mode=='town'?b>=2:b>0},cells=[];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(ok(x,y))cells.push([x,y]);if(!cells.length){flash('Nothing to claim on this map.');return}
+ const seeds=[cells[Math.floor(R()*cells.length)]];while(seeds.length<n){let best=null,bd=-1;for(let t=0;t<80;t++){const c=cells[Math.floor(R()*cells.length)],d=Math.min(...seeds.map(q=>Math.hypot(q[0]-c[0],q[1]-c[1])));if(d>bd){bd=d;best=c}}seeds.push(best)}
+ const o1=Math.floor(R()*900),o2=Math.floor(R()*900),lim=mode=='space'?mn*.3:1e9;fac.fill(0);
+ for(const[x,y]of cells){const nz=(fbm(x*.09,y*.09,o1,o2,3)-.5)*mn*.25;let bi=0,bd=1e9;seeds.forEach((q,i)=>{const d=Math.hypot(q[0]-x,q[1]-y)+nz*(i%2?1:-1);if(d<bd){bd=d;bi=i}});if(bd<lim)fac[y*W+x]=bi+1}
+ vis.f=1;ui();draw();flash('Territories assigned. Undo to revert.')}
+$('autof').onclick=autoFactions;
+function mixText(m){const c={};for(const j of m.cells)c[ter[j]]=(c[ter[j]]||0)+1;const k=Object.keys(c).sort((a,b)=>c[b]-c[a]);if(k.length<2)return '';return ` Terrain mix: ${k.slice(0,3).map(i=>`${(BIOMES[i]||['?'])[0].toLowerCase()} ${Math.round(c[i]/m.cells.length*100)}%`).join(', ')}.`}
+const colName=i=>{let t='';i++;while(i>0){t=String.fromCharCode(65+(i-1)%26)+t;i=Math.floor((i-1)/26)}return t};
+function drawGrid(){const g=gsz*S,w=W*S,h=H*S,vx0=-view.x/view.z,vy0=-view.y/view.z,vx1=(cv.width-view.x)/view.z,vy1=(cv.height-view.y)/view.z,lab=g*view.z>=44;
+ ctx.save();ctx.beginPath();ctx.rect(0,0,w,h);ctx.clip();ctx.strokeStyle='rgba(255,255,255,.32)';ctx.lineWidth=1/view.z;ctx.setLineDash([]);ctx.beginPath();
+ const L=[];
+ if(grid==1){for(let x=0;x<=w;x+=g){ctx.moveTo(x,0);ctx.lineTo(x,h)}for(let y=0;y<=h;y+=g){ctx.moveTo(0,y);ctx.lineTo(w,y)}
+  if(lab)for(let c=0;c*g<w;c++)for(let r=0;r*g<h;r++){const x=c*g,y=r*g;if(x+g>=vx0&&x<=vx1&&y+g>=vy0&&y<=vy1)L.push([x+2/view.z,y+2/view.z,colName(c)+(r+1),'left','top'])}}
+ else{const r=g/Math.sqrt(3),cols=Math.ceil(w/(1.5*r))+1,rows=Math.ceil(h/g)+1;
+  for(let c=0;c<cols;c++)for(let q=0;q<rows;q++){const cx=c*1.5*r,cy=q*g+(c%2)*g/2;if(cx+r<vx0||cx-r>vx1||cy+g<vy0||cy-g>vy1)continue;
+   for(let k=0;k<6;k++){const a=k*Math.PI/3,px=cx+r*Math.cos(a),py=cy+r*Math.sin(a);k?ctx.lineTo(px,py):ctx.moveTo(px,py)}ctx.closePath();
+   if(lab)L.push([cx,cy,String(c+1).padStart(2,'0')+String(q+1).padStart(2,'0'),'center','middle'])}}
+ ctx.stroke();ctx.font=`${Math.max(9,11/view.z)}px sans-serif`;ctx.fillStyle='rgba(255,255,255,.75)';for(const t of L){ctx.textAlign=t[3];ctx.textBaseline=t[4];ctx.fillText(t[2],t[0],t[1])}
+ ctx.restore()}
+function svRect(){const cl=(v,mx)=>Math.max(0,Math.min(mx,(v/S)|0));return[cl(Math.min(sv.a[0],sv.b[0]),W-1),cl(Math.min(sv.a[1],sv.b[1]),H-1),cl(Math.max(sv.a[0],sv.b[0]),W-1),cl(Math.max(sv.a[1],sv.b[1]),H-1)]}
+function drawSv(){const[x0,y0,x1,y1]=svRect();ctx.fillStyle='rgba(100,200,255,.16)';ctx.fillRect(x0*S,y0*S,(x1-x0+1)*S,(y1-y0+1)*S);ctx.setLineDash([6,4]);ctx.strokeStyle='#8fdcff';ctx.lineWidth=2;ctx.strokeRect(x0*S,y0*S,(x1-x0+1)*S,(y1-y0+1)*S);ctx.setLineDash([])}
+function svInfo(){const[x0,y0,x1,y1]=svRect(),cnt=new Array(BIOMES.length).fill(0),fc={},cells=[];
+ for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const j=y*W+x;cells.push(j);cnt[ter[j]]++;if(fac[j])fc[fac[j]]=(fc[fac[j]]||0)+1}
+ const inR=m=>{const cx=m.x/S|0,cy=m.y/S|0;return cx>=x0&&cx<=x1&&cy>=y0&&cy<=y1};
+ return{x0,y0,x1,y1,cnt,fc,cells,n:cells.length,pins:marks.filter(m=>!m.pts&&!m.reg&&!m.l&&inR(m)),paths:marks.filter(m=>m.pts&&m.pts.some(p=>inR({x:p[0],y:p[1]}))),regs:marks.filter(m=>m.reg&&inR(m))}}
+function surveyShow(){const o=svInfo(),pct=v=>Math.round(v/o.n*100);
+ const rows=o.cnt.map((c,i)=>[c,BIOMES[i]]).filter(r=>r[0]).sort((a,b)=>b[0]-a[0]).map(r=>`<div class="frow" style="align-items:center"><span class="sw" style="background:${r[1][1]}"></span><span style="flex:1">${esc(r[1][0])}</span><span>${pct(r[0])}%</span></div>`).join('');
+ const fr=Object.keys(o.fc).filter(k=>facs[k-1]).map(k=>`<span style="margin-right:8px"><span class="sw" style="background:${facs[k-1].c};display:inline-block"></span> ${esc(facs[k-1].n)} ${pct(o.fc[k])}%</span>`).join('')||'<i>No faction territory</i>';
+ $('sumc').innerHTML=`<div class="ihead"><b style="flex:1">🔍 Survey: ${o.x1-o.x0+1}×${o.y1-o.y0+1} cells, about ${Math.round(o.n*sc.v*sc.v)} ${esc(sc.u)}²</b><button data-sv="close">✕</button></div>${rows}<div style="margin-top:6px">${fr}</div><div style="margin-top:6px">Landmarks: ${o.pins.length?o.pins.map(m=>m.i+' '+esc(m.n||'Unnamed')).join(', '):'none'}</div><div>Paths crossing: ${o.paths.length}${o.regs.length?'. Districts: '+o.regs.map(m=>esc(m.n||'Unnamed')).join(', '):''}</div><div class="bar" style="margin-top:8px"><button data-sv="district">🏷️ Save as district</button></div>`;
+ $('sumc').hidden=false;draw()}
+$('sumc').onclick=e=>{const b=e.target.closest('[data-sv]');if(!b)return;if(b.dataset.sv=='close'){sv=null;$('sumc').hidden=true;draw();return}
+ if(!sv)return;const o=svInfo();if(o.n>6000){flash('Area too large to save as a district (limit 6000 cells).');return}snap();
+ const dom=o.cnt.indexOf(Math.max(...o.cnt)),top=o.cnt.map((c,i)=>[c,i]).filter(r=>r[0]).sort((a,b)=>b[0]-a[0]).slice(0,3).map(r=>`${BIOMES[r[1]][0].toLowerCase()} (${Math.round(r[0]/o.n*100)}%)`).join(', '),nm=$('name').value.trim();$('name').value='';
+ const m=mkReg(o.cells,dom,nm||'Surveyed area',`Mostly ${top}.${o.pins.length?' Contains '+o.pins.map(p=>p.n||'an unnamed site').join(', ')+'.':''}`);marks.push(m);sv=null;$('sumc').hidden=true;select(marks.length-1)};
+function buildWesteros(){
+ maps=[{id:'wst',name:'Westeros',d:null},{id:'kl',name:"King's Landing",d:null}];cur='wst';proj='Westeros (fan map)';back=[];undos=[];redos=[];
+ applyMode('fantasy');setDims(160,100);sc={v:36,u:'mi'};scUI();
+ const o=Array.from({length:4},()=>Math.floor(R()*900)),
+ inP=(x,y,P)=>{let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if((a[1]>y)!=(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c},
+ put=(x,y,v,z)=>{x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<W&&y<H&&(!z||ter[y*W+x]==0))ter[y*W+x]=v},
+ get=(x,y)=>{x=Math.round(x);y=Math.round(y);return x<0||y<0||x>=W||y>=H?-1:ter[y*W+x]},
+ rect=(x,y,w,h,v,z)=>{for(let j=0;j<h;j++)for(let i=0;i<w;i++)put(x+i,y+j,v,z)},
+ disc=(cx,cy,r,v,z)=>{for(let y=Math.floor(cy-r);y<=cy+r;y++)for(let x=Math.floor(cx-r);x<=cx+r;x++)if(Math.hypot(x-cx,y-cy)<=r)put(x,y,v,z)},
+ line=(x0,y0,x1,y1,v,wob,wd)=>{const dx=x1-x0,dy=y1-y0,l=Math.hypot(dx,dy)||1,n=Math.ceil(l*1.5)+1,ph=R()*9;for(let i=0;i<=n;i++){const t=i/n,w=Math.sin(t*5+ph)*wob,x=x0+dx*t-dy/l*w,y=y0+dy*t+dx/l*w;put(x,y,v);if(wd>1){put(x+1,y,v);put(x,y+1,v)}}},
+ bbox=P=>{let x0=1e9,x1=-1,y0=1e9,y1=-1;for(const p of P){x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1])}return[Math.max(0,Math.floor(x0-4)),Math.min(W-1,Math.ceil(x1+4)),Math.max(0,Math.floor(y0-4)),Math.min(H-1,Math.ceil(y1+4))]},
+ fill=(P,v,warp,cond)=>{const[x0,x1,y0,y1]=bbox(P);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const qx=warp?x+(fbm(x*.13,y*.13,o[0],o[1],3)-.5)*5:x,qy=warp?y+(fbm(x*.13,y*.13,o[2],o[3],3)-.5)*5:y;if(inP(qx+.5,qy+.5,P)&&(!cond||cond(ter[y*W+x])))ter[y*W+x]=v}},
+ facFill=(P,f,cond,ow)=>{const[x0,x1,y0,y1]=bbox(P);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(inP(x+.5,y+.5,P)&&cond(ter[y*W+x])&&(ow||!fac[y*W+x]))fac[y*W+x]=f},
+ L=b=>b>0,px=c=>(c+.5)*S;
+ // ---- land
+ [[[31,11],[51,11],[55,14],[57,18],[58,22],[60,26],[64,27],[66,31],[62,35],[58,39],[56,43],[57,47],[58,50],[62,53],[60,56],[58,59],[56,62],[54,64],[55,66],[57,67],[60,70],[60,73],[64,75],[65,79],[62,82],[61,86],[61,90],[58,93],[52,93],[46,92],[42,91],[38,89],[34,87],[29,86],[26,84],[27,80],[28,76],[30,73],[32,70],[30,67],[29,64],[31,60],[33,56],[36,52],[40,48],[38,43],[33,38],[31,34],[29,30],[27,25],[24,21],[26,18],[28,14]],
+  [[26,3],[58,3],[56,11],[30,11]],[[68,22],[72,20],[75,24],[72,28],[68,26]],[[20,17],[24,16],[25,20],[21,21]],[[28,56],[31,55],[32,58],[29,59]],[[24,57],[27,56],[27,60],[24,60]],[[30,51],[33,50],[34,53],[31,54]],[[62,64],[66,63],[67,66],[63,68]],[[20,91],[25,90],[26,94],[21,95]],[[62,48],[68,47],[69,51],[64,52]],
+  [[98,26],[160,18],[160,100],[110,100],[106,92],[108,84],[105,76],[107,70],[104,64],[106,58],[102,52],[99,46],[97,40],[99,33]]].forEach(P=>fill(P,1,1));
+ // ---- biomes
+ fill([[26,3],[60,3],[60,10],[26,10]],6,1,L);
+ fill([[112,26],[158,22],[158,72],[114,70],[108,60],[106,44]],9,1,b=>b==1);
+ [[[27,11],[34,11],[33,19],[27,18]],[[50,50],[58,50],[58,58],[50,58]],[[36,85],[56,85],[56,89],[36,89]],[[145,25],[160,25],[160,55],[145,55]]].forEach(P=>fill(P,4,1,L));
+ [[[30,5],[52,5],[52,10],[30,10]],[[28,22],[40,22],[40,36],[30,36]],[[40,30],[52,30],[52,40],[40,40]],[[50,64],[58,64],[58,72],[50,72]],[[54,78],[62,78],[62,86],[54,86]],[[30,76],[36,76],[36,84],[30,84]],[[40,52],[46,52],[46,57],[40,57]]].forEach(P=>fill(P,2,1,L));
+ [[[38,30],[50,30],[50,38],[38,38]],[[30,58],[42,58],[42,70],[30,70]],[[56,74],[66,74],[66,84],[56,84]],[[28,56],[32,56],[32,60],[28,60]],[[24,57],[27,57],[27,60],[24,60]],[[68,22],[75,22],[75,28],[68,28]]].forEach(P=>fill(P,3,1,L));
+ [[[42,43],[54,43],[54,49],[42,49]],[[56,86],[62,86],[60,92],[56,92]]].forEach(P=>fill(P,7,1,L));
+ [[[40,88],[56,88],[56,93],[40,93]],[[120,75],[160,75],[160,100],[120,100]]].forEach(P=>fill(P,5,1,L));
+ // ---- factions
+ facs=[{n:'House Stark',c:'#b8c4d6',d:'Wardens of the cold, sprawling North.'},{n:'House Arryn',c:'#5bb0e0',d:'Rulers of the mountain-ringed Vale.'},{n:'House Tully',c:'#3b7bd3',d:'Lords of the river country at the heart of the realm.'},{n:'House Greyjoy',c:'#6f7f8f',d:'Sea-raiding islanders of the western isles.'},{n:'House Lannister',c:'#d33b3b',d:'Wealthy lords of the western coast.'},{n:'House Baratheon',c:'#e0b030',d:'Storm-lashed rulers of the south-east.'},{n:'House Tyrell',c:'#3fae6a',d:'Masters of the fertile south-western Reach.'},{n:'House Martell',c:'#e07a30',d:'Proud rulers of the sun-scorched south.'},{n:'The Crown',c:'#b36bff',d:'The throne and the royal lands around the capital.'}];
+ fsel=1;
+ for(const P of [[[28,56],[31,55],[32,58],[29,59]],[[24,57],[27,56],[27,60],[24,60]],[[30,51],[33,50],[34,53],[31,54]]])facFill(P,4,b=>b>0);
+ [[[[20,3],[80,3],[80,47],[36,47],[20,40]],1],[[[50,47],[70,47],[70,60],[56,62],[50,56]],2],[[[40,48],[56,48],[58,64],[52,67],[44,66],[40,60]],3],[[[48,62],[60,62],[68,70],[60,74],[50,74]],9],[[[26,56],[46,56],[46,72],[28,72]],5],[[[36,86],[66,86],[66,98],[36,98]],8],[[[54,72],[70,72],[68,86],[52,86]],6],[[[22,70],[50,70],[50,88],[36,90],[22,98]],7]].forEach(([P,f])=>facFill(P,f,b=>b>0));
+ facFill([[62,64],[66,63],[67,66],[63,68]],9,b=>b>0);
+ for(let y=0;y<H;y++)for(let x=98;x<W;x++)fac[y*W+x]=0;
+ // ---- map furniture
+ const snapLand=(x,y)=>{for(let r=0;r<8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){if(Math.max(Math.abs(dx),Math.abs(dy))!=r)continue;const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<W&&yy<H&&ter[yy*W+xx]>0)return[xx,yy]}return[x,y]},
+ pin=(i,n,x,y,d,link)=>{const c=snapLand(x,y),m={x:px(c[0]),y:px(c[1]),i,n,l:false,d};if(link)m.link=link;marks.push(m)},
+ lab=(n,x,y)=>marks.push({x:px(x),y:px(y),i:'',n,l:true,d:''}),
+ path=(t,n,P,d)=>{const m=P[P.length>>1];marks.push({pts:P.map(p=>[px(p[0]),px(p[1])]),t,n,d:d||'',x:px(m[0]),y:px(m[1]),i:'',l:false})};
+ marks=[];
+ path(1,'The Kingsroad',[[41,12],[43,22],[44,30],[46,38],[47,44],[46,50],[48,57],[51,63],[54,68]],'The great north-south highway of the realm.');
+ path(1,'The Gold Road',[[54,68],[46,68],[38,67],[31,66]],'Links the capital to the rich western coast.');
+ path(1,'The Rose Road',[[54,68],[48,74],[43,77],[38,78]],'Links the capital to the fertile Reach.');
+ path(0,'The Trident',[[55,53],[51,55],[47,57],[44,59]],'The great river of the central lands.');
+ path(0,'Blackwater Rush',[[48,60],[50,64],[52,66],[54,68]],'Flows into the bay beside the capital.');
+ path(3,'Narrow Sea crossing',[[62,56],[80,54],[100,47]],'A busy shipping lane to the free cities.');
+ path(3,'Bay lane',[[58,68],[82,66],[105,62]],'Trade route from the capital to Pentos.');
+ pin('🗼','The Wall',40,11,'A colossal ice barrier at the northern edge of the realm, garrisoned by the Night\'s Watch.');
+ pin('🏰','Castle Black',41,13,'The main fortress of the Night\'s Watch, just south of the Wall.');
+ pin('🏰','Winterfell',44,30,'Ancient northern castle and seat of House Stark, built over hot springs.');
+ pin('⚓','White Harbor',58,38,'The North\'s main port city, home to a large fishing fleet.');
+ pin('🏚️','Moat Cailin',47,44,'A ruined fortress guarding the only dry route through the marshy Neck.');
+ pin('🏰','The Eyrie',55,53,'A mountain stronghold of House Arryn, reachable only by one steep path.');
+ pin('⚓','Gulltown',62,56,'The Vale\'s busy port on the Narrow Sea.');
+ pin('🏰','Riverrun',44,58,'Seat of House Tully where two rivers meet.');
+ pin('🏰','The Twins',46,50,'Twin castles holding the only bridge over the river for many miles.');
+ pin('🏚️','Harrenhal',51,62,'A vast ruined fortress beside a great lake, said to be cursed.');
+ pin('🏰','Pyke',29,57,'Sea-battered castle of House Greyjoy on the Iron Islands.');
+ pin('🏰','Casterly Rock',30,66,'Mountain fortress of House Lannister, overlooking the western sea.');
+ pin('⚓','Lannisport',31,68,'Rich harbour city beneath the Rock.');
+ pin('🏙️',"King's Landing",54,68,'Capital of the realm and seat of the Iron Throne, built on three hills beside Blackwater Bay. Open the linked map for a city plan.','kl');
+ pin('🏰','Dragonstone',64,65,'Island fortress guarding the mouth of Blackwater Bay.');
+ pin('🏰',"Storm's End",64,78,'A sturdy fortress on the storm-lashed south-eastern coast.');
+ pin('🏰','Highgarden',38,78,'Lush seat of House Tyrell in the fertile Reach.');
+ pin('🏙️','Oldtown',28,84,'One of the oldest and largest cities of the realm, a centre of learning.');
+ pin('🏰','Sunspear',60,89,'Sun-baked capital of Dorne.');
+ pin('🏙️','Braavos',101,46,'A free city across the Narrow Sea, built on lagoon islands and famed for its canals and bankers.');
+ pin('🏙️','Pentos',106,62,'A wealthy free city of merchants on the Essos coast.');
+ [['BEYOND THE WALL',42,7],['THE NORTH',44,21],['THE NECK',48,46],['THE VALE',58,50],['RIVERLANDS',45,54],['IRON ISLANDS',23,53],['WESTERLANDS',35,63],['CROWNLANDS',50,66],['THE REACH',40,83],['STORMLANDS',58,80],['DORNE',48,90],['The Narrow Sea',82,58],['The Sunset Sea',10,55],['ESSOS',128,50],['Dothraki Sea',125,35]].forEach(([n,x,y])=>lab(n,x,y));
+ stash();
+ // ================= King's Landing =================
+ cur='kl';applyMode('town','medieval');setDims(96,60);sc={v:50,u:'yd'};scUI();
+ const CP=[[22,10],[44,6],[62,7],[78,14],[79,40],[72,49],[46,50],[26,46],[20,30]],IN=[[26,13],[44,10],[61,11],[74,17],[75,38],[69,45],[46,46],[30,43],[25,30]],
+ G=[['Iron Gate',44,6],['Gate of the Gods',31,9],['Lion Gate',21,20],['Old Gate',24,40],['Mud Gate',38,48],['Dragon Gate',79,32],["King's Gate",70,11]],
+ nr=(x,y,r)=>{for(let j=-r;j<=r;j++)for(let i=-r;i<=r;i++)if(get(x+i,y+j)==1)return 1;return 0},
+ FB=[[44,36],[60,34],[64,44],[48,47]];
+ for(let y=0;y<H;y++){const xc=82+Math.sin(y*.21)*2.5;for(let x=Math.floor(xc);x<W;x++)put(x,y,7)}
+ for(let x=0;x<=84;x++)disc(x,53+Math.sin(x*.11)*2,1.7,7);
+ for(const g of G)line(g[1],g[2],46,28,1,1.5,2);
+ line(46,28,59,25,1,1,2);line(38,48,38,55,1,0,2);line(70,11,70,16,1,0);
+ for(let i=0;i<IN.length;i++)line(IN[i][0],IN[i][1],IN[(i+1)%IN.length][0],IN[(i+1)%IN.length][1],1,.6);
+ line(30,20,56,38,1,2);line(36,42,68,22,1,2);line(34,28,60,42,1,1.5);
+ rect(60,18,17,14,4);rect(61,19,15,12,0);rect(64,22,7,6,4);rect(65,23,5,4,0);rect(66,24,3,2,4);put(60,25,1);put(60,26,1);
+ disc(34,16,4,3);rect(32,14,5,5,4);rect(33,15,3,3,0);
+ for(let a=0;a<6.3;a+=.12)put(30+Math.cos(a)*5,35+Math.sin(a)*5,4);disc(30,35,3.6,0);
+ disc(46,24,3,3);disc(40,20,2.5,3);disc(73,43,2.5,3);rect(37,30,9,2,5);rect(70,46,3,2,5);rect(66,47,3,2,5);rect(74,40,2,2,5);
+ for(let i=0;i<CP.length;i++){const a=CP[i],b=CP[(i+1)%CP.length],l=Math.hypot(b[0]-a[0],b[1]-a[1]),n=Math.ceil(l*1.6);for(let k=0;k<=n;k++){const x=a[0]+(b[0]-a[0])*k/n,y=a[1]+(b[1]-a[1])*k/n;if(G.some(g=>Math.hypot(g[1]-x,g[2]-y)<2.2))continue;put(x,y,4,1)}}
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(get(x,y)==0&&inP(x+.5,y+.5,FB)&&R()<.55)put(x,y,8,1);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(get(x,y)!=0||!inP(x+.5,y+.5,CP)||!nr(x,y,2)||R()>.8)continue;rect(x,y,1+(R()<.5),1+(R()<.4),R()<.1?5:2,1)}
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(get(x,y)==0&&!inP(x+.5,y+.5,CP)&&fbm(x*.1,y*.1,o[0],o[1],3)>.52)put(x,y,6);
+ facs=[{n:'The Crown',c:'#d33b3b',d:'The royal court and its household guards.'},{n:'City Watch',c:'#d3a93b',d:'Keeps order in the streets and at the gates.'},{n:'Faith of the Seven',c:'#b79cff',d:'The state religion, centred on its great temple.'},{n:'Flea Bottom Smallfolk',c:'#8a7a6a',d:'The crowded poor who make up much of the city.'}];
+ facFill(CP,2,b=>b!=7,1);facFill(FB,4,b=>b!=7,1);facFill([[26,12],[42,12],[42,24],[26,24]],3,b=>b!=7,1);
+ facFill([[59,17],[78,17],[78,33],[59,33]],1,b=>b!=7,1);
+ const hill=(P)=>{const c=[],[x0,x1,y0,y1]=bbox(P);for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)if(inP(x+.5,y+.5,P)&&inP(x+.5,y+.5,CP))c.push(y*W+x);return c},
+ reg=(P,n,d)=>{const c=hill(P);if(c.length)marks.push(mkReg(c,2,n,d))},
+ pinc=(i,n,x,y,d)=>marks.push({x:px(x),y:px(y),i,n,l:false,d});
+ marks=[];
+ reg([[58,16],[78,16],[78,34],[58,34]],"Aegon's High Hill",'The eastern hill overlooking the bay, crowned by the royal fortress.');
+ reg([[26,12],[42,12],[42,24],[26,24]],"Visenya's Hill",'The north-western hill, dominated by the great temple of the Seven.');
+ reg([[24,29],[38,29],[38,40],[24,40]],"Rhaenys's Hill",'The south-western hill, home to a ruined arena for dragons.');
+ reg(FB,'Flea Bottom','A maze of crowded alleys and cheap food stalls, the poorest quarter of the city.');
+ reg([[66,38],[79,38],[79,50],[66,50]],'The Docks','Wharves, fish markets and warehouses along the bay.');
+ pinc('🏰','The Red Keep',68,25,'The royal fortress on Aegon\'s High Hill, with walls of red stone and a great hall holding the Iron Throne.');
+ pinc('⛪','Great Sept of Baelor',34,16,'The grandest temple of the Seven, with seven crystal-topped towers.');
+ pinc('🏚️','The Dragonpit',30,35,'A vast domed arena on Rhaenys\'s Hill, now ruined and empty.');
+ pinc('⚓',"Fishmonger's Square",73,43,'The busy dockside market, loud with gulls and haggling.');
+ pinc('⚒️','Street of Steel',41,31,'Armourers and smiths line this clanging street.');
+ pinc('🛡️','City Watch Barracks',50,18,'Base of the gold-cloaked watchmen who patrol the streets.');
+ for(const g of G)pinc('🚪',g[0],g[1],g[2],'One of the seven great gates in the city walls.');
+ lab('Blackwater Bay',90,30);lab('Blackwater Rush',50,56);lab('Flea Bottom',54,41);
+ stash();
+ cur='wst';unpack(maps[0].d);renderTabs();$('pname').value=proj;ui()}
+let dm=0;$('demo').onclick=e=>{const b=e.currentTarget;if(!dm){dm=1;b.textContent='Click again to replace this project';setTimeout(()=>{dm=0;b.textContent='📜 Westeros demo'},3500);return}dm=0;b.textContent='📜 Westeros demo';buildWesteros();flash("Loaded a fan-made Westeros with a linked King's Landing map.")};
+let LQ=[];
+function lbl(t,x,y,sz,col,o){LQ.push(Object.assign({t,x,y,sz,col,pr:3},o))}
+function tw(q){ctx.font=`${q.it?'italic ':'bold '}${q.sz}px Georgia,serif`;return ctx.measureText(q.sp?q.t.split('\u200a').join('').split('').join('\u200a'):q.t).width}
+function flushLabels(){const vx0=-view.x/view.z-80,vy0=-view.y/view.z-40,vx1=(cv.width-view.x)/view.z+80,vy1=(cv.height-view.y)/view.z+40,k=ms,boxes=[],pad=2*k,hitB=b=>boxes.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]);
+ if(vis.m)for(const m of marks){if(m.pts||m.reg||m.l||m.x<vx0||m.x>vx1||m.y<vy0||m.y>vy1)continue;const r=13*k;boxes.push([m.x-r,m.y-r,m.x+r,m.y+r])}
+ ctx.textAlign='center';ctx.textBaseline='middle';LQ.sort((a,b)=>a.pr-b.pr);
+ for(const q of LQ){if(!q.t||q.x<vx0||q.x>vx1||q.y<vy0||q.y>vy1)continue;const w=tw(q),h=q.sz*1.2;let C;
+  if(q.kind=='pin')C=[[q.x,q.y+22*k],[q.x,q.y-24*k],[q.x+15*k+w/2,q.y+2*k],[q.x-15*k-w/2,q.y+2*k],[q.x,q.y+38*k]].map(p=>({x:p[0],y:p[1]}));
+  else if(q.kind=='reg')C=[[q.x,q.y],[q.x,q.y-16*k],[q.x,q.y+16*k]].map(p=>({x:p[0],y:p[1]}));
+  else if(q.kind=='path'){const P=q.pts,Ls=[];let tot=0;for(let i=1;i<P.length;i++){const d=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);Ls.push(d);tot+=d}
+   C=[.5,.3,.7,.15,.85].map(f=>{let t=f*tot,i=0;while(i<Ls.length-1&&t>Ls[i]){t-=Ls[i];i++}const a=P[i],b=P[i+1]||a,u=Ls[i]?t/Ls[i]:0;let ang=Math.atan2(b[1]-a[1],b[0]-a[0]);if(ang>Math.PI/2)ang-=Math.PI;if(ang<-Math.PI/2)ang+=Math.PI;return{x:a[0]+(b[0]-a[0])*u+Math.sin(ang)*9*k,y:a[1]+(b[1]-a[1])*u-Math.cos(ang)*9*k,rot:ang}})}
+  else C=[{x:q.x,y:q.y}];
+  for(const c of C){const bw=c.rot?w*Math.abs(Math.cos(c.rot))+h*Math.abs(Math.sin(c.rot)):w,bh=c.rot?w*Math.abs(Math.sin(c.rot))+h*Math.abs(Math.cos(c.rot)):h,b=[c.x-bw/2-pad,c.y-bh/2-pad,c.x+bw/2+pad,c.y+bh/2+pad];
+   if(q.kind=='area'||!hitB(b)){boxes.push(b);if(c.rot){ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot);text(q.t,0,0,q.sz,q.col,q.sp,q.it);ctx.restore()}else text(q.t,c.x,c.y,q.sz,q.col,q.sp,q.it);break}}}
+ LQ=[]}
+function applyMode(k,pt){mode=k;if(pt)ptype=pt;if(k=='town'&&!TS[ptype])ptype='medieval';if(k=='planet'&&!PT[ptype])ptype='terran';M=MODES[k];const P=k=='planet'?PT[ptype]:k=='town'?TS[ptype]:null;
+ BIOMES=P?P.b.map((e,i)=>[e[0],e[1],P.dc[i]]):M.b;MARKS=P&&P.m||M.m;FLAV=M.t;facs=JSON.parse(JSON.stringify(P&&P.f||M.f));fsel=1;biome=1;mark=0;ptp=0;tool='pan';
+ $('ptwrap').hidden=!(k=='planet'||k=='town');$('globewrap').hidden=k!='planet';$('pth').textContent=k=='town'?'Settlement style':'Planet type';$('ptype').innerHTML=(VO[k]||[]).map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('');$('ptype').value=ptype;sc=JSON.parse(JSON.stringify(SCD[k=='town'?ptype:k]||{v:1,u:'cells'}));scUI();$('autod').hidden=k!='town';ui()}
+$('ptype').onchange=e=>{snap();applyMode(mode,e.target.value);setDims(W,H);generate()};
+const rr=a=>a[0]+R()*(a[1]-a[0]);
+const SY=["ka","vor","el","tha","ry","zen","ar","kos","ix","mi","lu","an","or","ve","sa","dra","gal","nu"];
+function sname(){let s='';for(let i=0,n=2+(R()<.4);i<n;i++)s+=SY[Math.floor(R()*SY.length)];return s[0].toUpperCase()+s.slice(1)+(R()<.3?' '+['Prime','II','III','Minor','Major'][Math.floor(R()*5)]:'')}
+function generate(){fac.fill(0);marks=[];sel=null;$('info').hidden=true;
+ if(mode=='space')genSpace();else if(mode=='sky')genSky();else if(mode=='town')genTown(ptype);else genLand(mode=='planet'?PT[ptype]:FANT);
+ draw()}
+function fld(x,y,fr,O,i,o,wrap){const f=xx=>fbm(xx*fr,y*fr,O[i],O[i+1],o);return wrap?(f(x)*(W-x)+f(x-W)*x)/W:f(x)}
+function genLand(P){
+ const N=W*H,fr=(3+R()*5)/Math.min(W,H),wrap=!!P.wrap,o=()=>Math.floor(R()*1300),O=Array.from({length:8},o);
+ const nb=2+Math.floor(R()*6),bl=[];for(let i=0;i<nb;i++)bl.push([R()*W,R()*H,Math.min(W,H)*(.12+R()*.3)]);
+ const wf=.25+R()*.55,rim=P.rim?Math.min(W,H)*(.04+R()*.08):0,cb=rr(P.cb),mt=.42+R()*.18,hl=mt-.15-R()*.08,wT=rr(P.wt);
+ const e=new Float32Array(N),m=new Float32Array(N),t=new Float32Array(N),w=new Float32Array(N);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;
+  e[i]=fld(x,y,fr,O,0,6,wrap);m[i]=fld(x,y,fr*.8,O,2,4,wrap);t[i]=fld(x,y,fr*.7,O,4,3,wrap);w[i]=fld(x,y,fr*1.6,O,6,4,wrap)}
+ nrm(e);nrm(m);nrm(t);nrm(w);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;let b=0;
+  for(const q of bl){let dx=Math.abs(x-q[0]);if(wrap)dx=Math.min(dx,W-dx);const d=Math.hypot(dx,y-q[1])/q[2];b=Math.max(b,Math.exp(-d*d))}
+  const f=rim?Math.min(1,Math.min(x,y,W-1-x,H-1-y)/rim):1;e[i]=(wf*e[i]+(1-wf)*b)*(f*f*(3-2*f))}
+ const sorted=Float32Array.from(e).sort(),sea=sorted[Math.floor(rr(P.sea)*N)],hmax=sorted[N-1];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(e[i]<=sea){ter[i]=0;continue}
+  const h=(e[i]-sea)/(hmax-sea||1),lat=1-Math.abs(2*y/H-1),tt=Math.max(0,Math.min(1,.55*lat+.45*t[i]+cb))-h*.3,mm=m[i]+P.mb;let b;
+  if(h>mt)b=tt<.3?6:4;else if(h>hl)b=tt<.22?6:3;
+  else if(tt<.25)b=6;else if(w[i]>wT&&tt>.35)b=8;else if(tt>.62&&mm<.5)b=5;else if(mm>.68&&h<.1)b=7;else b=mm>.5?2:1;
+  ter[i]=b}}
+function genSpace(){
+ const N=W*H,fr=(3+R()*4)/Math.min(W,H),o=()=>Math.floor(R()*1300),O=Array.from({length:10},o),A=[0,1,2,3,4].map(()=>new Float32Array(N));
+ const mu=[1,.9,1.3,2.6,1.1],oc=[5,3,4,3,4];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++)for(let k=0;k<5;k++)A[k][y*W+x]=fbm(x*fr*mu[k],y*fr*mu[k],O[k*2],O[k*2+1],oc[k]);
+ A.forEach(nrm);const[a,n2,c,d,g]=A,nt=.45+R()*.2,at=.74+R()*.1,it=.84+R()*.08,lw=.012+R()*.012,mn=Math.min(W,H);
+ const cl=[],wl=[];for(let i=0,n=1+Math.floor(R()*4);i<n;i++)cl.push([R()*W,R()*H,mn*(.05+R()*.07)]);for(let i=0,n=Math.floor(R()*3);i<n;i++)wl.push([R()*W,R()*H,mn*(.03+R()*.03)]);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;let b=0;
+  if(a[i]>nt)b=n2[i]>.5?1:2;if(Math.abs(c[i]-.5)<lw&&a[i]>.3)b=3;if(d[i]>at&&(b==0||b==3))b=4;if(g[i]>it)b=8;
+  for(const q of cl){const dd=Math.hypot(x-q[0],y-q[1])/q[2];if(dd<1&&hash(x*3,y*3)>dd*.8)b=5}
+  for(const q of wl){const dd=Math.hypot(x-q[0],y-q[1])/q[2];if(dd<.6)b=7;else if(dd<1.1&&hash(x,y+9)>.4)b=6}
+  ter[i]=b}
+ const kind={'🟡':'yellow main-sequence star','🟠':'orange dwarf','🔴':'red dwarf','🔵':'blue giant','⚪':'white dwarf'},ic=['🟡','🟡','🟠','🔴','🔴','🔴','🔵','⚪'],cnt=Math.round(N/(40+R()*40));
+ for(let p=0,tr=0;p<cnt&&tr<cnt*20;tr++){const x=Math.floor(R()*W),y=Math.floor(R()*H),b=ter[y*W+x];if(b==7||R()>(b==5?1:.75))continue;
+  const i=ic[Math.floor(R()*ic.length)],k=Math.floor(R()*6);p++;
+  marks.push({x:(x+.15+R()*.7)*S,y:(y+.15+R()*.7)*S,i,n:sname(),l:false,d:`A ${kind[i]}. ${k?k+' known planet'+(k>1?'s':''):'No known planets'}${k>3?', one in the habitable zone':''}.`})}
+ for(const q of wl)marks.push({x:q[0]*S,y:q[1]*S,i:'🕳️',n:'Singularity '+sname(),l:false,d:'A black hole bending the lanes around it.'});
+ for(let i=0,n=Math.floor(R()*3);i<n;i++)marks.push({x:R()*W*S,y:R()*H*S,i:'🌀',n:sname()+' Gate',l:false,d:'A stable wormhole linking distant sectors.'})}
+function genSky(){
+ const N=W*H,fr=(3+R()*4)/Math.min(W,H),o=()=>Math.floor(R()*1300),O=Array.from({length:12},o),A=[0,1,2,3,4].map(()=>new Float32Array(N)),pt=new Float32Array(N);
+ const mu=[1,.8,1.4,1.2,2.2],oc=[5,4,3,4,3];
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;for(let k=0;k<5;k++)A[k][i]=fbm(x*fr*mu[k],y*fr*mu[k],O[k*2],O[k*2+1],oc[k]);pt[i]=fbm(x*fr*2.4,y*fr*2.4,O[10],O[11],3)}
+ A.forEach(nrm);const[cl,ash,st,mo,cr]=A,cT=.58+R()*.15,aT=.5+R()*.2,sT=.84+R()*.06,mn=Math.min(W,H),is=[];
+ for(let i=0,n=Math.round(N/(550+R()*500));i<n;i++)is.push([(.06+R()*.88)*W,(.06+R()*.88)*H,3+R()*7]);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;let b=0;
+  if(cl[i]>cT)b=1;if(st[i]>sT)b=2;
+  let v=0;for(const q of is)v=Math.max(v,1-Math.hypot(x-q[0],y-q[1])/q[2]);v+=(pt[i]-.5)*.8;
+  if(v>.08){b=v>.62?5:(mo[i]>.5?4:3);if(cr[i]>.8&&v>.2)b=6}
+  ter[i]=b}}
+const oc=document.createElement('canvas');
+function soft(){oc.width=W;oc.height=H;const g=oc.getContext('2d'),im=g.createImageData(W,H),C=BIOMES.map(b=>[1,3,5].map(k=>parseInt(b[1].slice(k,k+2),16)));
+ for(let i=0;i<W*H;i++){const c=C[ter[i]],v=.75+.5*hash(i%W,i/W|0);for(let k=0;k<3;k++)im.data[i*4+k]=c[k]*v;im.data[i*4+3]=255}
+ g.putImageData(im,0,0);ctx.imageSmoothingEnabled=true;ctx.drawImage(oc,0,0,W*S,H*S)}
+function deco(c,cx,cy,h){if(!c||c=='-')return;const A=f=>{ctx.beginPath();ctx.arc(cx,cy,f[0],0,7);f[1]?ctx.fill():ctx.stroke()},L=pts=>{ctx.beginPath();pts.forEach((p,i)=>i?ctx.lineTo(cx+p[0],cy+p[1]):ctx.moveTo(cx+p[0],cy+p[1]));ctx.stroke()};
+ if(c=='t'){if(h>.35){ctx.fillStyle='rgba(0,0,0,.35)';A([3.5,1])}}
+ else if(c=='m'){ctx.fillStyle='#555';ctx.beginPath();ctx.moveTo(cx-6,cy+5);ctx.lineTo(cx,cy-6);ctx.lineTo(cx+6,cy+5);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(cx-2,cy-2);ctx.lineTo(cx,cy-6);ctx.lineTo(cx+2,cy-2);ctx.fill()}
+ else if(c=='h'){if(h>.4){ctx.strokeStyle='rgba(0,0,0,.25)';ctx.beginPath();ctx.arc(cx,cy+3,5,Math.PI,0);ctx.stroke()}}
+ else if(c=='d'){if(h>.5){ctx.strokeStyle='rgba(255,255,255,.3)';ctx.beginPath();ctx.arc(cx,cy+2,5,Math.PI,0);ctx.stroke()}}
+ else if(c=='s'){if(h>.4){ctx.strokeStyle='rgba(255,255,255,.3)';L([[-4,0],[4,0]])}}
+ else if(c=='w'){if(h>.8){ctx.strokeStyle='rgba(255,255,255,.18)';ctx.beginPath();ctx.arc(cx,cy,3,Math.PI,0);ctx.stroke()}}
+ else if(c=='c'){if(h>.7){ctx.strokeStyle='rgba(0,0,0,.3)';A([2+h*3,0])}}
+ else if(c=='x'){if(h>.5){ctx.fillStyle='rgba(255,255,255,.65)';ctx.beginPath();ctx.moveTo(cx,cy-4);ctx.lineTo(cx+3,cy);ctx.lineTo(cx,cy+4);ctx.lineTo(cx-3,cy);ctx.fill()}}
+ else if(c=='k'){if(h>.5){ctx.strokeStyle='rgba(255,170,70,.75)';L([[-4,-2],[0,1],[4,-1]])}}
+ else if(c=='g'){if(h>.4){ctx.fillStyle='rgba(255,255,255,.55)';A([4,1])}}
+ else if(c=='z'){if(h>.7){ctx.strokeStyle='rgba(255,230,120,.85)';L([[-3,-4],[1,-1],[-1,1],[3,5]])}}
+ else if(c=='a'){if(h>.35){ctx.fillStyle='#a39e94';A([1.5+h*1.5,1])}}
+ else if(c=='n'){if(h>.88){ctx.fillStyle='#fff';A([.9,1])}}
+ else if(c=='N'){if(h>.3){ctx.fillStyle='rgba(255,245,200,.9)';A([.7+h,1])}}
+ else if(c=='v'||c=='V'){if(h>.25){ctx.strokeStyle=c=='v'?'rgba(22,78,28,.4)':'rgba(125,98,22,.45)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(cx-3,cy+2);ctx.lineTo(cx-2,cy-2);ctx.moveTo(cx,cy+3);ctx.lineTo(cx,cy-3);ctx.moveTo(cx+3,cy+2);ctx.lineTo(cx+2,cy-2);ctx.stroke()}}
+ else{const gx=Math.round((cx-7)/14)*14+7,gy=Math.round((cy-7)/14)*14+7;
+  if(c=='r'){ctx.fillStyle='rgba(0,0,0,.28)';ctx.fillRect(gx-5,gy-5,10,10);ctx.strokeStyle='rgba(255,255,255,.22)';ctx.beginPath();ctx.moveTo(gx-5,gy);ctx.lineTo(gx+5,gy);ctx.stroke()}
+  else if(c=='T'){ctx.fillStyle='rgba(255,255,255,.4)';ctx.beginPath();ctx.moveTo(gx-5,gy+4);ctx.lineTo(gx,gy-5);ctx.lineTo(gx+5,gy+4);ctx.fill();ctx.fillStyle='rgba(0,0,0,.35)';ctx.fillRect(gx-1,gy+1,2,3)}
+  else if(c=='W'){ctx.fillStyle='rgba(0,0,0,.32)';ctx.fillRect(gx-6,gy-3,4,6);ctx.fillRect(gx+2,gy-3,4,6)}
+  else if(c=='f'){ctx.strokeStyle='rgba(0,0,0,.2)';ctx.beginPath();for(const d of[-4,0,4]){ctx.moveTo(gx-6,gy+d);ctx.lineTo(gx+6,gy+d)}ctx.stroke()}
+  else if(c=='p'){if(h>.6){ctx.fillStyle='rgba(0,0,0,.2)';A([1,1])}}
+  else if(c=='q'){ctx.strokeStyle='rgba(255,255,255,.16)';ctx.strokeRect(gx-5,gy-5,10,10);if(h>.5){ctx.fillStyle='rgba(255,230,140,.7)';ctx.fillRect(gx-1,gy-1,2,2)}}
+  else if(c=='l'){if(h>.5){ctx.fillStyle='rgba(120,220,255,.7)';ctx.beginPath();ctx.arc(gx,gy,1.3,0,7);ctx.fill()}}
+  else if(c=='o'){ctx.strokeStyle='rgba(0,0,0,.28)';ctx.beginPath();ctx.arc(gx,gy,4.5,0,7);ctx.stroke()}}}
+let gq=0;
+function globe(){if(mode!='planet'||gq)return;gq=requestAnimationFrame(()=>{gq=0;const gc=$('globe'),g=gc.getContext('2d'),n=gc.width,im=g.createImageData(n,n),rot=$('rot').value/100*Math.PI*2,C=BIOMES.map(b=>[1,3,5].map(k=>parseInt(b[1].slice(k,k+2),16)));
+ for(let py=0;py<n;py++)for(let px=0;px<n;px++){const nx=(px+.5)/n*2-1,ny=(py+.5)/n*2-1,r2=nx*nx+ny*ny;if(r2>1)continue;
+  const z=Math.sqrt(1-r2),u=((Math.atan2(nx,z)+rot)/(2*Math.PI)+.5)%1,v=.5-Math.asin(-ny)/Math.PI,c=C[ter[Math.min(H-1,v*H|0)*W+Math.min(W-1,u*W|0)]],l=.2+.9*Math.max(0,-nx*.5-ny*.35+z*.75),k=(py*n+px)*4;
+  im.data[k]=c[0]*l;im.data[k+1]=c[1]*l;im.data[k+2]=c[2]*l+Math.pow(r2,6)*70;im.data[k+3]=255}
+ g.putImageData(im,0,0)})}
+$('rot').oninput=globe;
+const PP={
+fantasy:[{n:"River",c:"#4a90d9",w:4,d:[]},{n:"Road",c:"#8a5f35",w:3,d:[8,5]},{n:"Trade Route",c:"#e0b030",w:3,d:[2,6]},{n:"Sea Lane",c:"#cfe8ff",w:2,d:[3,7]}],
+planet:[{n:"River / Canal",c:"#4a90d9",w:4,d:[]},{n:"Highway",c:"#c8c0b0",w:3,d:[8,5]},{n:"Supply Line",c:"#e0b030",w:3,d:[2,6]},{n:"Pipeline",c:"#e07a30",w:3,d:[10,3]}],
+space:[{n:"Hyperlane",c:"#5fd0ff",w:2,d:[]},{n:"Trade Lane",c:"#ffd24a",w:2,d:[6,5]},{n:"Warp Route",c:"#c58bff",w:2,d:[2,6]},{n:"Patrol Route",c:"#ff6a6a",w:2,d:[10,6]}],
+sky:[{n:"Skyship Lane",c:"#ffffff",w:3,d:[10,7]},{n:"Wind Current",c:"#8fdcff",w:5,d:[]},{n:"Rope Bridge",c:"#8a5a2a",w:3,d:[3,3]},{n:"Trade Winds",c:"#ffd24a",w:3,d:[2,7]}]};
+PP.medieval=[{n:"Stream",c:"#4a90d9",w:3,d:[]},{n:"Cobbled Lane",c:"#d8cdb0",w:2,d:[6,4]},{n:"Palisade",c:"#6a4a2a",w:3,d:[2,3]},{n:"Patrol Route",c:"#d33b3b",w:2,d:[8,6]}];
+PP.scifi=[{n:"Maglane",c:"#5fd0ff",w:2,d:[]},{n:"Coolant Pipe",c:"#4aa8e0",w:3,d:[6,3]},{n:"Power Cable",c:"#ffd24a",w:2,d:[3,4]},{n:"Patrol Route",c:"#ff6a6a",w:2,d:[8,6]}];
+PP.nomad=[{n:"Migration Trail",c:"#e0c070",w:3,d:[4,6]},{n:"Water Run",c:"#4a90d9",w:3,d:[]},{n:"Raid Route",c:"#d33b3b",w:2,d:[8,6]},{n:"Rope Line",c:"#8a5a2a",w:2,d:[2,3]}];
+PP.scrap=[{n:"Smuggler's Path",c:"#e0b030",w:2,d:[3,6]},{n:"Power Line",c:"#ffd24a",w:2,d:[8,3]},{n:"Barricade Line",c:"#9a9fa6",w:4,d:[3,3]},{n:"Pipe Run",c:"#4a90d9",w:3,d:[6,4]}];
+function pp(){return PP[mode=='town'?ptype:mode]}
+function drawPath(m,hl){const T=pp()[m.t]||pp()[0],p=m.pts;ctx.lineCap='round';ctx.lineJoin='round';
+ const tr=()=>{ctx.beginPath();ctx.moveTo(p[0][0],p[0][1]);for(let i=1;i<p.length-1;i++)ctx.quadraticCurveTo(p[i][0],p[i][1],(p[i][0]+p[i+1][0])/2,(p[i][1]+p[i+1][1])/2);const l=p[p.length-1];ctx.lineTo(l[0],l[1]);ctx.stroke()};
+ if(hl){ctx.setLineDash([]);ctx.strokeStyle='rgba(255,210,74,.55)';ctx.lineWidth=(T.w+8)*ms;tr()}
+ ctx.setLineDash([]);ctx.strokeStyle='rgba(0,0,0,.45)';ctx.lineWidth=(T.w+2)*ms;tr();
+ ctx.setLineDash(T.d.map(v=>v*ms));ctx.strokeStyle=T.c;ctx.lineWidth=T.w*ms;tr();ctx.setLineDash([])}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const uid=()=>'m'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),K=(host.getAttribute('storage-key')||'fmm3')+':';
+function pack(){return{mo:mode,pt:ptype,sc,w:W,h:H,t:Array.from(ter).join(''),f:Array.from(fac,v=>v.toString(36)).join(''),m:marks,fs:facs}}
+function unpack(d){applyMode(d.mo||'fantasy',d.pt);setDims(d.w,d.h);if(d.sc)sc=d.sc;scUI();ter=Uint8Array.from(d.t,c=>+c);fac=Uint8Array.from(d.f,c=>parseInt(c,36));marks=d.m||[];facs=d.fs||facs;ui();select(null)}
+function stash(){const m=maps.find(x=>x.id==cur);if(m)m.d=pack()}
+function projObj(){stash();return{name:proj,cur,maps}}
+function mkMap(name){const id=uid();maps.push({id,name,d:null,seed:{mo:mode,pt:ptype,w:W,h:H}});renderTabs();return id}
+function openMap(id,push){const m=maps.find(x=>x.id==id);if(!m||id==cur)return;stash();if(push)back.push(cur);cur=id;undos=[];redos=[];
+ if(m.d)unpack(m.d);else{const sd=m.seed||{mo:'fantasy',w:96,h:60};applyMode(sd.mo,sd.pt);setDims(sd.w,sd.h);generate();ui()}renderTabs()}
+function renderTabs(){$('tabs').innerHTML=(back.length?'<button data-back="1" title="Back">←</button>':'')+maps.map(m=>`<button data-tab="${m.id}" class="${m.id==cur?'on':''}">${esc(m.name)}</button>`).join('')+'<button data-new="1" title="New map">＋</button>'}
+function delMap(id){if(maps.length<2)return mm('A project needs at least one map.');if(id==cur)openMap(maps.find(x=>x.id!=id).id,false);maps=maps.filter(x=>x.id!=id);back=back.filter(x=>x!=id);renderTabs();mapsUI()}
+function loadProject(o){if(!o||!Array.isArray(o.maps)||!o.maps.length)throw 0;maps=o.maps;proj=o.name||'My World';cur=maps.some(m=>m.id==o.cur)?o.cur:maps[0].id;back=[];undos=[];redos=[];
+ const m=maps.find(x=>x.id==cur);if(m.d)unpack(m.d);else{const sd=m.seed||{mo:'fantasy',w:96,h:60};applyMode(sd.mo,sd.pt);setDims(sd.w,sd.h);generate();ui()}renderTabs()}
+function fillLink(m){const o=$('ilink');o.innerHTML='<option value="">🔗 No linked map</option>'+maps.filter(x=>x.id!=cur).map(x=>`<option value="${x.id}">↗ ${esc(x.name)}</option>`).join('')+'<option value="+">＋ New linked map…</option>';o.value=m.link&&maps.some(x=>x.id==m.link)?m.link:'';$('iopen').hidden=!o.value}
+$('ilink').onchange=e=>{const m=marks[sel];if(!m)return;let v=e.target.value;if(v=='+')v=mkMap(m.n||'Linked map');m.link=v||undefined;fillLink(m);draw()};
+$('iopen').onclick=()=>{const m=marks[sel];if(m&&m.link)openMap(m.link,true)};
+function slots(){const o=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(K)&&k!=K+'__auto')o.push(k.slice(K.length))}}catch(e){}return o.sort()}
+function saveSlot(n){try{localStorage.setItem(K+n,JSON.stringify(projObj()));return 1}catch(e){return 0}}
+let at=0;function touch(){clearTimeout(at);at=setTimeout(()=>{try{localStorage.setItem(K+'__auto',JSON.stringify(projObj()))}catch(e){}},1500)}
+const mm=t=>{$('mmsg').textContent=t};
+function slotsUI(){$('slots').innerHTML=slots().map(n=>`<div class="frow"><span style="flex:1;align-self:center">${esc(n)}</span><button data-a="load" data-i="${esc(n)}">Load</button><button data-a="del" data-i="${esc(n)}">🗑️</button></div>`).join('')||'<i>No saved slots yet.</i>'}
+function mapsUI(){$('mlist').innerHTML=maps.map(m=>`<div class="frow"><input type="text" data-mi="${m.id}" value="${esc(m.name)}"><button data-a="goto" data-i="${m.id}">Open</button><button data-a="dm" data-i="${m.id}">🗑️</button></div>`).join('')}
+$('qsave').onclick=()=>flash(saveSlot(proj)?`Saved "${proj}"`:'Save failed (storage unavailable)');
+$('proj').onclick=()=>{$('pname').value=proj;slotsUI();mapsUI();mm('');$('modal').hidden=false};
+function cp(el){el.select();let ok=0;try{ok=document.execCommand('copy')}catch(e){}if(ok)mm('Copied');else if(navigator.clipboard)navigator.clipboard.writeText(el.value).then(()=>mm('Copied'),()=>mm('Select the text and copy it manually.'));else mm('Select the text and copy it manually.')}
+async function dl(name,data){try{const d=window.claude&&claude.use?await claude.use('downloads'):null;if(!d){const bl=data instanceof Blob?data:new Blob([data],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return mm('Saved '+name)}await d.save({filename:name,data});mm('Saved '+name)}catch(e){mm(e&&e.code=='declined'?'Save cancelled.':'Could not save the file. Use Copy instead.')}}
+async function render(){const v=view,sl=sel;view={z:1,x:0,y:0};sel=null;draw();$('pimg').src=cv.toDataURL();$('pimg').hidden=false;const bl=await new Promise(r=>cv.toBlob(r));view=v;sel=sl;draw();return bl}
+function loreMap(){const mp=maps.find(x=>x.id==cur),tot=W*H,cnt={},o=[`## ${mp.name}`,`*${M.n.replace(/^\S+\s/,'')} map, ${W}×${H} cells.*`,''];
+ for(const v of fac)if(v)cnt[v]=(cnt[v]||0)+1;
+ const at=m=>fac[Math.min(H-1,m.y/S|0)*W+Math.min(W-1,m.x/S|0)],pins=marks.filter(m=>!m.pts&&!m.l&&!m.reg),ps=marks.filter(m=>m.pts),rg=marks.filter(m=>m.reg),ls=marks.filter(m=>m.l&&m.n);
+ const rl=f=>REL.slice(1).map(r=>{const n=Object.keys(f.rel||{}).filter(j=>f.rel[j]==r&&facs[j]).map(j=>facs[j].n);return n.length?`${r}: ${n.join(', ')}`:''}).filter(Boolean);
+ if(facs.some((f,i)=>cnt[i+1]||f.d||rl(f).length)){o.push('### Factions');facs.forEach((f,i)=>{if(!(cnt[i+1]||f.d||rl(f).length))return;const ins=pins.filter(m=>at(m)==i+1).map(m=>m.n||'unnamed '+m.i);o.push(`- **${f.n}**`+(cnt[i+1]?`: ${Math.round(cnt[i+1]/tot*100)}% of the map`+(ins.length?`; landmarks: ${ins.join(', ')}`:''):'')+(f.d?` — ${f.d}`:''));rl(f).forEach(t=>o.push(`  - ${t}`))});o.push('')}
+ if(pins.length){o.push('### Landmarks');for(const m of pins){o.push(`#### ${m.i} ${m.n||'Unnamed'}`);if(m.d)o.push(m.d);o.push(`*${landText(m)}*`);const l=maps.find(x=>x.id==m.link);if(l)o.push(`Leads to map: **${l.name}**`);o.push('')}}
+ if(rg.length){o.push('### Districts');for(const m of rg){o.push(`#### ${m.i||'🏷️'} ${m.n||'Unnamed'}`);if(m.d)o.push(m.d);o.push(`*${regText(m).trim()} ${landText(m)}*`);const l=maps.find(x=>x.id==m.link);if(l)o.push(`Leads to map: **${l.name}**`);o.push('')}}
+ if(ps.length){o.push('### Paths');for(const m of ps){const T=(pp()[m.t]||{}).n||'Path';o.push(`- **${m.n||T}** (${T}), about ${plen(m)} cells (${Math.round(plen(m)*sc.v)} ${sc.u}) long${m.d?': '+m.d:''}`)}o.push('')}
+ if(ls.length)o.push('### Named places',...ls.map(m=>`- ${m.n}`),'');
+ return o.join('\n')}
+function lore(){const c0=cur,u=undos,u2=redos,out=[`# ${proj}`,''];stash();for(const id of maps.map(x=>x.id)){openMap(id,false);out.push(loreMap())}openMap(c0,false);undos=u;redos=u2;return out.join('\n')}
+let np=0;
+$('modal').onclick=async e=>{if(e.target.id=='modal'){$('modal').hidden=true;return}const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.i;
+ if(a=='close')$('modal').hidden=true;
+ else if(a=='save'){proj=$('pname').value.trim()||'My World';mm(saveSlot(proj)?`Saved "${proj}".`:'Could not save (storage unavailable or full).');slotsUI()}
+ else if(a=='load'){try{loadProject(JSON.parse(localStorage.getItem(K+id)));$('modal').hidden=true}catch(x){mm('Could not load that slot.')}}
+ else if(a=='del'){try{localStorage.removeItem(K+id)}catch(x){}slotsUI()}
+ else if(a=='goto'){openMap(id,false);$('modal').hidden=true}
+ else if(a=='dm')delMap(id);
+ else if(a=='exp'){$('jtxt').value=JSON.stringify(projObj());mm('Copy this, or use Save .json.')}
+ else if(a=='copy')cp($('jtxt'));
+ else if(a=='expdl'){if(!$('jtxt').value)$('jtxt').value=JSON.stringify(projObj());await dl(proj+'.json',$('jtxt').value)}
+ else if(a=='imp'){try{loadProject(JSON.parse($('jtxt').value));mm('Imported.');mapsUI()}catch(x){mm('That is not a valid project JSON.')}}
+ else if(a=='csv'){$('jtxt').value=csvAll();mm('CSV is in the box. Copy it or use Save .csv.')}
+ else if(a=='csvdl'){const t=csvAll();$('jtxt').value=t;await dl(proj+'-pins.csv',t)}
+ else if(a=='lore')$('ltxt').value=lore();
+ else if(a=='lcopy')cp($('ltxt'));
+ else if(a=='ldl'){if(!$('ltxt').value)$('ltxt').value=lore();await dl(proj+'-lore.md',$('ltxt').value)}
+ else if(a=='png')await render();
+ else if(a=='pngdl'){const bl=await render();await dl(proj+'-'+(maps.find(x=>x.id==cur)||{}).name+'.png',bl)}
+ else if(a=='newproj'){if(!np){np=1;b.textContent='Click again to confirm (unsaved work is lost)';setTimeout(()=>{np=0;b.textContent='🆕 New project'},3500);return}np=0;b.textContent='🆕 New project';
+  maps=[{id:'m0',name:'World Map',d:null}];cur='m0';proj='My World';back=[];undos=[];redos=[];applyMode('fantasy');setDims(96,60);generate();renderTabs();$('pname').value=proj;slotsUI();mapsUI();mm('Started a new project.')}};
+$('modal').addEventListener('input',e=>{const id=e.target.dataset.mi;if(!id)return;const m=maps.find(x=>x.id==id);if(m){m.name=e.target.value||'Map';renderTabs();touch()}});
+const HK={pan:'v',biome:'b',erase:'e',fill:'g',mark:'m',label:'t',path:'p',faction:'f',unfac:'x',region:'d',building:'u',measure:'r',survey:'s'};
+root.addEventListener('keydown',e=>{const inp=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
+ if(e.key=='Escape'){$('modal').hidden=true;$('fmodal').hidden=true;if(!inp)select(null);return}
+ if(inp||!$('modal').hidden||!$('fmodal').hidden)return;
+ const k=e.key.toLowerCase(),c=e.ctrlKey||e.metaKey;
+ if(c&&k=='z'){e.preventDefault();(e.shiftKey?$('redo'):$('undo')).click();return}
+ if(c&&k=='y'){e.preventDefault();$('redo').click();return}
+ if(c)return;
+ if(k=='delete'||k=='backspace'){if(marks[sel]){snap();marks.splice(sel,1);select(null)}return}
+ if(k=='+'||k=='='){$('zin').click();return}if(k=='-'){$('zout').click();return}if(k=='0'){$('zreset').click();return}
+ const t=Object.keys(HK).find(n=>HK[n]==k);if(t){tool=t;ui()}});
+function flash(t){$('hint').textContent=t;setTimeout(()=>$('hint').textContent=HINT,1500)}
+const HINT='✋ Pan/Inspect: drag to move the map, click a pin for details. Scroll wheel or ➕➖ to zoom. Paint tools: click or drag. Path tool: drag to draw rivers, roads and lanes. Drag a pin to move it; pinch to zoom on touch screens. 🏷️ District: click an area to name and describe it.';
+function pos(e){const r=cv.getBoundingClientRect(),k=cv.width/r.width;return[((e.clientX-r.left)*k-view.x)/view.z,((e.clientY-r.top)*k-view.y)/view.z]}
+function brush(px,py){const R=+$('size').value,cx=px/S|0,cy=py/S|0;
+ for(let y=cy-R;y<=cy+R;y++)for(let x=cx-R;x<=cx+R;x++){if(x<0||y<0||x>=W||y>=H)continue;
+  if(Math.hypot(x-cx,y-cy)>R-.3+(hash(x,y)*.8))continue;const i=y*W+x;
+  if(tool=='biome')ter[i]=biome;else if(tool=='erase')ter[i]=0;else if(tool=='faction')fac[i]=fsel;else if(tool=='unfac')fac[i]=0}}
+let pan=null;const ptr=new Map();let pinch=null;function cpos(e){const r=cv.getBoundingClientRect(),k=cv.width/r.width;return[(e.clientX-r.left)*k,(e.clientY-r.top)*k]}
+function hit(x,y){let b=-1,bd=24*ms/view.z;marks.forEach((m,i)=>{if(m.pts||m.reg)return;const d=Math.hypot(m.x-x,m.y-y);if(d<bd){bd=d;b=i}});if(b>=0)return b;bd=12*ms/view.z;
+ marks.forEach((m,i)=>{if(!m.pts)return;const d=pdist(m.pts,x,y);if(d<bd){bd=d;b=i}});return b}
+function pdist(P,x,y){let r=1e9;for(let i=1;i<P.length;i++){const ax=P[i-1][0],ay=P[i-1][1],dx=P[i][0]-ax,dy=P[i][1]-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));r=Math.min(r,Math.hypot(x-ax-t*dx,y-ay-t*dy))}return r}
+function plen(m){return Math.round(m.pts.reduce((s,p,i)=>i?s+Math.hypot(p[0]-m.pts[i-1][0],p[1]-m.pts[i-1][1]):0,0)/S)}
+function finishPath(){const p=dr;dr=null;if(p.pts.length<2){marks.splice(marks.indexOf(p),1);draw();return}const q=p.pts[p.pts.length>>1];p.x=q[0];p.y=q[1];select(marks.indexOf(p))}
+cv.addEventListener('pointerleave',()=>{$('tip').hidden=true});
+cv.addEventListener('pointerdown',e=>{$('tip').hidden=true;cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,cpos(e));if(ptr.size==2){if(dr)finishPath();painting=false;pan=null;mv=null;if(meas)meas.live=0;const[a,b]=[...ptr.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z:view.z,m:[(a[0]+b[0])/2,(a[1]+b[1])/2]};return}const[x,y]=pos(e);
+ if(tool=='pan'||e.button==1){const h=hit(x,y);if(h>=0&&e.button!=1){select(h);if(!marks[h].pts)mv={i:h,dx:marks[h].x-x,dy:marks[h].y-y,moved:0};return}pan={sx:e.clientX,sy:e.clientY,ox:view.x,oy:view.y,moved:0,rg:e.button==1?-1:hitReg(x,y)};cv.style.cursor='grabbing';return}
+ if(tool=='measure'){meas={a:[x,y],b:[x,y],live:1};draw();return}
+ if(tool=='survey'){sv={a:[x,y],b:[x,y],live:1};$('sumc').hidden=true;draw();return}
+ snap();
+ if(tool=='fill'){flood(x,y);draw();return}
+ if(tool=='region'){defRegion(x,y);return}
+ if(tool=='building'){bd={a:[x,y],b:[x,y]};draw();return}
+ if(tool=='path'){dr={pts:[[x,y]],t:ptp,n:$('name').value.trim(),d:'',x,y,i:'',l:false};$('name').value='';marks.push(dr);draw();return}
+ if(tool=='mark'||tool=='label'){marks.push({x,y,i:tool=='mark'?MARKS[mark]:'',n:$('name').value.trim(),l:tool=='label',d:''});$('name').value='';select(marks.length-1);return}
+ if(tool=='remove'){let h=hit(x,y);if(h<0)h=hitReg(x,y);if(h>=0){marks.splice(h,1);select(null)}return}
+ painting=true;brush(x,y);draw()});
+cv.addEventListener('pointermove',e=>{
+ if(e.pointerType=='mouse'&&!e.buttons){hover(e);return}
+ if(ptr.has(e.pointerId))ptr.set(e.pointerId,cpos(e));
+ if(pinch&&ptr.size>=2){const[a,b]=[...ptr.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2];zoomAt(Math.max(1,Math.min(10,pinch.z*d/pinch.d))/view.z,m[0],m[1]);view.x+=m[0]-pinch.m[0];view.y+=m[1]-pinch.m[1];clampView();pinch.m=m;draw();return}
+ if(pinch)return;
+ if(mv){const[x,y]=pos(e),m=marks[mv.i];if(!m)return;if(!mv.moved){if(Math.hypot(x+mv.dx-m.x,y+mv.dy-m.y)<4/view.z)return;snap();mv.moved=1}m.x=Math.max(0,Math.min(W*S,x+mv.dx));m.y=Math.max(0,Math.min(H*S,y+mv.dy));draw();return}
+ if(sv&&sv.live){sv.b=pos(e);draw();return}
+ if(bd){bd.b=pos(e);draw();return}
+ if(meas&&meas.live){meas.b=pos(e);draw();return}
+ if(dr){const[x,y]=pos(e),l=dr.pts[dr.pts.length-1];if(Math.hypot(x-l[0],y-l[1])>5/view.z){dr.pts.push([x,y]);draw()}return}
+ if(pan){if(Math.hypot(e.clientX-pan.sx,e.clientY-pan.sy)>4)pan.moved=1;const r=cv.getBoundingClientRect(),k=cv.width/r.width;view.x=pan.ox+(e.clientX-pan.sx)*k;view.y=pan.oy+(e.clientY-pan.sy)*k;clampView();draw();return}
+ if(!painting)return;const[x,y]=pos(e);brush(x,y);draw()});
+const up=e=>{ptr.delete(e.pointerId);if(sv&&sv.live){sv.live=0;surveyShow()}if(bd)finishBld();if(ptr.size<2)pinch=null;if(mv&&mv.moved)select(mv.i);mv=null;if(meas)meas.live=0;if(dr)finishPath();painting=false;if(pan&&pan.rg>=0&&!pan.moved)select(pan.rg);pan=null;if(tool=='pan')cv.style.cursor='grab'};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+function clampView(){const w=cv.width,h=cv.height;view.x=Math.min(0,Math.max(w-w*view.z,view.x));view.y=Math.min(0,Math.max(h-h*view.z,view.y))}
+function zoomAt(f,sx,sy){const nz=Math.min(10,Math.max(1,view.z*f)),k=nz/view.z;view.x=sx-(sx-view.x)*k;view.y=sy-(sy-view.y)*k;view.z=nz;clampView();$('zl').textContent=Math.round(nz*100)+'%';draw()}
+cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect(),k=cv.width/r.width;zoomAt(e.deltaY<0?1.2:1/1.2,(e.clientX-r.left)*k,(e.clientY-r.top)*k)},{passive:false});
+$('zin').onclick=()=>zoomAt(1.4,cv.width/2,cv.height/2);
+$('zout').onclick=()=>zoomAt(1/1.4,cv.width/2,cv.height/2);
+$('zreset').onclick=()=>{view={z:1,x:0,y:0};$('zl').textContent='100%';draw()};
+const FFLAV=[["Open water. Currents here are said to shift with the seasons.","Deep, cold sea, named by sailors for the wrecks beneath."],
+["Rolling grassland where herds graze and roads are easy to build.","Windswept plains with rich soil and wide skies, ideal farmland."],
+["Dense woodland thick with game, hidden paths and old timber.","A shadowed forest where the canopy swallows the light."],
+["Broken hill country, rich in ore and good for watchtowers.","Gorse-covered hills dotted with barrows and shepherd tracks."],
+["Towering peaks; passes are narrow, cold and easy to defend.","Jagged mountains veined with metal and haunted by echoes."],
+["Arid dunes and scrub where water is wealth and caravans follow the oases.","Sun-bleached desert, scorching by day and bitterly cold at night."],
+["Frozen tundra of ice and snow, with bitter winds and sparse life.","A white waste where only the hardy or the desperate settle."],
+["Fetid marsh of fog, reeds and sucking mud; sickness is common.","Brackish swamp where pale lights drift over the water at night."],
+["Blasted wasteland, scarred, barren and whispered to be cursed.","Ashen ground cracked by ancient fire; little grows here."]];
+FBIO.push(["Steppe","#b9b565","V"]);FFLAV.push(["Wide golden grassland rolling to the horizon, home to riders and herds.","An endless sea of tall grass, hissing in the wind."]);
+function landText(m){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),b=ter[cy*W+cx];
+ const near={};let coast=false;
+ for(let y=cy-4;y<=cy+4;y++)for(let x=cx-4;x<=cx+4;x++){if(x<0||y<0||x>=W||y>=H)continue;const t=ter[y*W+x];if(t==0)coast=true;else if(t!=b)near[t]=(near[t]||0)+1}
+ let s=`${M.ic} ${BIOMES[b][0]}: `+FLAV[b][(cx+cy)%2];
+ if(coast&&M.cs&&(M.cf?M.cf.includes(b):b))s+=M.cs;
+ const nb=Object.entries(near).sort((p,q)=>q[1]-p[1]).slice(0,2).map(e=>BIOMES[e[0]][0].toLowerCase());
+ if(nb.length)s+=` Nearby: ${nb.join(' and ')}.`;
+ const f=fac[cy*W+cx];return s+(f&&facs[f-1]?` Claimed by ${facs[f-1].n}.`:' No faction claims this land.')}
+function select(i){sel=i;const m=marks[i];$('info').hidden=!m;
+ if(m){$('iicon').textContent=m.pts?'〰️':m.reg?(m.i||'🏷️'):m.l?'🔤':m.i;$('iname').value=m.n;$('idesc').value=m.d||'';$('iland').textContent=(m.pts?`${(pp()[m.t]||{}).n||'Path'}, about ${plen(m)} cells (${Math.round(plen(m)*sc.v)} ${sc.u}) long. `:m.reg?regText(m):'')+landText(m)+nearText(m);fillLink(m);$('info').scrollIntoView({block:'nearest'})}
+ draw()}
+$('iname').oninput=e=>{if(marks[sel]){marks[sel].n=e.target.value;draw()}};
+$('idesc').oninput=e=>{if(marks[sel])marks[sel].d=e.target.value;touch()};
+$('idel').onclick=()=>{if(marks[sel]){snap();marks.splice(sel,1);select(null)}};
+$('iclose').onclick=()=>select(null);
+function draw(){LQ=[];
+ ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#14110c';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(view.z,0,0,view.z,view.x,view.y);
+ const x0=Math.max(0,Math.floor(-view.x/view.z/S)),x1=Math.min(W,Math.ceil((cv.width-view.x)/view.z/S)),y0=Math.max(0,Math.floor(-view.y/view.z/S)),y1=Math.min(H,Math.ceil((cv.height-view.y)/view.z/S));
+ const sm=vis.s&&!M.soft;if(M.soft)soft();else if(sm)drawSmooth(x0,x1,y0,y1);
+ for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const b=ter[y*W+x],h=hash(x,y);
+  if(!M.soft&&!sm){ctx.fillStyle=BIOMES[b][1];ctx.fillRect(x*S,y*S,S,S);ctx.fillStyle=h>.5?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';ctx.fillRect(x*S,y*S,S,S)}
+  deco(BIOMES[b][2],x*S+S/2+(h-.5)*4,y*S+S/2+(hash(y,x)-.5)*4,h)}
+ if(M.cliff)for(let y=y0;y<Math.min(y1,H-1);y++)for(let x=x0;x<x1;x++){const q=ter[y*W+x];if(q>=3&&q<=6){const u=ter[(y+1)*W+x];if(u<3||u>6){ctx.fillStyle='rgba(70,52,38,.9)';ctx.fillRect(x*S,(y+1)*S,S,5)}}}
+ // factions
+ const sum=facs.map(()=>[0,0,0]);
+ if(sm&&vis.f){const L=facs.map(()=>[]);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const f=fac[y*W+x];if(!f||!facs[f-1])continue;L[f-1].push(x,y);const q=sum[f-1];q[0]+=x;q[1]+=y;q[2]++}
+  L.forEach((l,i)=>{if(!l.length)return;ctx.fillStyle=facs[i].c+'59';ctx.shadowColor=facs[i].c;ctx.shadowBlur=5;ctx.beginPath();for(let j=0;j<l.length;j+=2){const cx=(l[j]+.5)*S,cy=(l[j+1]+.5)*S,r=S*.72;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}ctx.fill()});ctx.shadowBlur=0;ctx.shadowColor='transparent'}
+ else for(let y=0;y<H;y++)for(let x=0;x<W;x++){const f=fac[y*W+x];if(!f||!facs[f-1]||!vis.f)continue;
+  ctx.fillStyle=facs[f-1].c+'66';ctx.fillRect(x*S,y*S,S,S);const s=sum[f-1];s[0]+=x;s[1]+=y;s[2]++;
+  ctx.fillStyle=facs[f-1].c;ctx.lineWidth=0;
+  if(x==W-1||fac[y*W+x+1]!=f)ctx.fillRect(x*S+S-2,y*S,2,S);if(x==0||fac[y*W+x-1]!=f)ctx.fillRect(x*S,y*S,2,S);
+  if(y==H-1||fac[(y+1)*W+x]!=f)ctx.fillRect(x*S,y*S+S-2,S,2);if(y==0||fac[(y-1)*W+x]!=f)ctx.fillRect(x*S,y*S,S,2)}
+ ctx.textAlign='center';ctx.textBaseline='middle';
+ sum.forEach((s,i)=>{if(s[2]>6)lbl(facs[i].n.toUpperCase(),(s[0]/s[2]+.5)*S,(s[1]/s[2]+.5)*S,15*ms,'#fff',{sp:1,pr:7,kind:'fac'})});
+ if(grid)drawGrid();
+ for(const m of marks)if(m.reg&&vis.r)drawReg(m,m===marks[sel]);
+ for(const m of marks)if(m.pts&&vis.p){drawPath(m,m===marks[sel]);if(vis.n&&m.n&&(!M.lod||view.z>=1.6))lbl(m.n,m.x,m.y,13*ms,'#fff',{it:1,pr:5,kind:'path',pts:m.pts})}
+ for(const m of marks){if(m.pts||m.reg)continue;if(m.l){if(vis.n)lbl(m.n,m.x,m.y,17*ms,'#fff',{it:1,pr:1,kind:'area'});continue}
+  if(!vis.m)continue;ctx.font=26*ms+'px serif';ctx.fillStyle='#000';ctx.fillText(m.i,m.x,m.y);if(m.link&&maps.some(x=>x.id==m.link)){ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(m.x+13*ms,m.y-13*ms,5*ms,0,7);ctx.fill();ctx.fillStyle='#000';ctx.font=7*ms+'px sans-serif';ctx.fillText('↗',m.x+13*ms,m.y-12.5*ms)}if(vis.n&&m.n&&(!M.lod||view.z>=1.6||marks[sel]===m))lbl(m.n,m.x,m.y,13*ms,'#fff',{pr:marks[sel]===m?0:3,kind:'pin'})}
+ if(marks[sel]&&!marks[sel].pts&&!marks[sel].reg){const m=marks[sel];ctx.strokeStyle='#ffd24a';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(m.x,m.y,(m.l?10:20)*ms,0,7);ctx.stroke()}
+ flushLabels();if(meas)drawMeas();if(bd)drawBd();if(sv)drawSv();if(legend)drawLegend();if(vis.k)drawFrame();globe();touch()}
+function text(t,x,y,sz,col,sp,it){if(!t)return;ctx.font=`${it?'italic ':'bold '}${sz}px Georgia,serif`;
+ if(sp)t=t.split('').join('\u200a');ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,.75)';ctx.lineJoin='round';ctx.strokeText(t,x,y);ctx.fillStyle=col;ctx.fillText(t,x,y)}
+$('hint').textContent=HINT;applyMode('fantasy');setDims(96,60);generate();renderTabs();
+try{const au=localStorage.getItem(K+'__auto');if(au)loadProject(JSON.parse(au))}catch(e){}
+
+}
+class FantasyMapMaker extends HTMLElement{connectedCallback(){if(this._mm)return;this._mm=1;const r=this.attachShadow({mode:'open'});r.appendChild(document.getElementById('mm-tpl').content.cloneNode(true));run(this,r,r.getElementById('app'))}}
+if(!customElements.get('fantasy-map-maker'))customElements.define('fantasy-map-maker',FantasyMapMaker);
+})();
+</script></body></html>
