@@ -12,30 +12,34 @@ fantasy-map-maker{display:block;height:calc(100vh - env(safe-area-inset-top,0px)
 <template id="mm-tpl"><style>
 :host{display:block;height:780px}
 :host(.mm-narrow){height:auto}
-*{box-sizing:border-box}
+*{box-sizing:border-box}[hidden]{display:none!important}
 .app{--bg:var(--mm-bg,#f3ecdc);--panel:var(--mm-panel,#e4d8bc);--ink:var(--mm-ink,#2d2417);--accent:var(--mm-accent,#8a4b1f);--line:var(--mm-line,#b9a77f);position:relative;display:flex;height:100%;background:var(--bg);color:var(--ink);font:14px/1.4 Georgia,serif;text-align:left;outline:none;overflow:hidden}
 .app[data-theme="dark"]{--bg:var(--mm-bg,#1c1812);--panel:var(--mm-panel,#2a241a);--ink:var(--mm-ink,#eadfc6);--accent:var(--mm-accent,#d49a5a);--line:var(--mm-line,#4a3f2c)}
 #side{width:260px;flex:none;height:100%;background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow-y:auto}
 #main{flex:1;min-width:0;height:100%;overflow-y:auto;padding:10px}
 .app.narrow{flex-direction:column;height:auto;overflow:visible}
 .app.narrow #side{width:100%;height:auto;border-right:0;border-bottom:1px solid var(--line)}
-.app.narrow #main{height:auto;overflow:visible;width:100%}
+.app.narrow #main{height:auto;overflow:visible;width:100%;order:-1}
+.app.narrow #find{flex:1;min-width:120px}
+#qtool{display:none}.app.narrow #qtool{display:block;flex:1 1 100%}
 .app.narrow #modal,.app.narrow #fmodal{position:fixed}
 h1{font-size:18px;margin:0 0 8px;color:var(--accent)}
 h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;margin:14px 0 6px;color:var(--accent)}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 button,input,select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
 button{cursor:pointer;text-align:left;display:flex;align-items:center;gap:6px}
-button.on{outline:2px solid var(--accent);background:var(--panel)}
+button.on{outline:2px solid var(--accent);background:var(--panel)}button:disabled{opacity:.42;cursor:default}
 .sw{width:14px;height:14px;border-radius:3px;border:1px solid #0006;flex:none}
 input[type=range]{width:100%;padding:0}input[type=text]{width:100%}
 input[type=color]{width:26px;height:26px;padding:0;flex:none}
 .frow{display:flex;gap:4px;margin-bottom:4px}.frow input[type=text]{flex:1;min-width:0}
-#wrap{overflow:auto;border:2px solid var(--line);border-radius:8px;background:#000}
+#wrap{position:relative;overflow:auto;border:2px solid var(--line);border-radius:8px;background:#000}
+#bcur{position:absolute;left:0;top:0;pointer-events:none;border:1.5px solid rgba(255,255,255,.9);border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.6),inset 0 0 0 1px rgba(0,0,0,.4)}#bcur[hidden]{display:none}
+#seed{width:92px}
 canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
 .bar{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}.bar button{justify-content:center}
 #info{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px}#info[hidden]{display:none}.ihead{display:flex;gap:6px;margin-bottom:6px;align-items:center}.ihead input{flex:1;min-width:0}#iicon{font-size:26px}textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px}#iland{margin-top:8px;font-style:italic;opacity:.85;border-top:1px dashed var(--line);padding-top:6px}
-#tabs{margin:0 0 6px}#sumc{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}#sumc[hidden]{display:none}#tip{position:fixed;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:260px;white-space:pre-wrap;font-size:12px}#tip[hidden]{display:none}#fmodal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}#fmodal[hidden]{display:none}#fbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;width:min(460px,100%);max-height:90vh;overflow:auto;padding:14px}#modal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}#modal[hidden]{display:none}#mbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:14px}#mbox textarea{font:12px monospace}#pimg{max-width:100%;border-radius:6px;margin-top:6px}
+#tabs{margin:0 0 6px}#sumc{margin-top:8px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:13px}#sumc[hidden]{display:none}#tip{position:fixed;z-index:8;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:260px;white-space:pre-wrap;font-size:12px}#tip[hidden]{display:none}#ctx{position:fixed;z-index:9;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px;box-shadow:0 6px 20px rgba(0,0,0,.4);min-width:190px}#ctx button{width:100%;border:0;background:transparent;padding:6px 8px}#ctx button:hover{background:var(--bg)}#fmodal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}#fmodal[hidden]{display:none}#fbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;width:min(460px,100%);max-height:90vh;overflow:auto;padding:14px}#modal{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;z-index:9;padding:12px}#modal[hidden]{display:none}#mbox{background:var(--bg);border:1px solid var(--line);border-radius:10px;width:min(560px,100%);max-height:90vh;overflow:auto;padding:14px}#mbox textarea{font:12px monospace}#pimg{max-width:100%;border-radius:6px;margin-top:6px}
 #hint{opacity:.7;font-size:12px;margin-top:6px}
 
 </style><div class="app" id="app" tabindex="0"><div id="side">
@@ -45,45 +49,49 @@ canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
 <h2>Tool</h2>
 <div class="grid" id="tools"></div>
 <h2>Brush size: <span id="bs">3</span></h2>
-<input type="range" id="size" min="1" max="10" value="3">
-<h2>Biomes</h2><div class="grid" id="biomes"></div>
+<input type="range" id="size" min="1" max="10" value="3"><div class="frow" style="margin-top:4px;align-items:center"><span style="font-size:12px;white-space:nowrap">Only paint on</span><select id="pmask" style="flex:1;min-width:0" title="Limit painting (biomes, erasing, factions, fog) to these cells"></select></div><label style="font-size:12px;display:flex;gap:6px;align-items:center;margin-top:4px" title="Paint only some cells for ragged, natural edges"><input type="checkbox" id="scat"> Scatter brush</label><div style="font-size:11px;opacity:.7;margin-top:2px">Shift+click: straight line · Alt+click: pick biome/faction</div>
+<h2>Biomes</h2><div class="grid" id="biomes"></div><div class="grid" style="margin-top:5px"><button id="tidy" title="Smooth away single stray cells and jagged edges">✨ Tidy terrain</button><button id="bedit" title="Rename biomes and change their colours for this map">🎨 Edit biomes</button></div>
 <h2>Landmarks</h2><div class="grid" id="marks"></div>
 <h2>Paths</h2><div class="grid" id="paths"></div>
 <h2>Scale (1 cell =)</h2><div class="frow"><input type="number" id="scv" min="0.01" step="any" style="width:90px"><input type="text" id="scu" placeholder="unit"></div>
 <div class="frow"><span style="align-self:center;font-size:12px">Grid every</span><input type="number" id="gsz" value="5" min="1" step="1" style="width:64px"><span id="gtxt" style="align-self:center;font-size:12px"></span></div>
 <h2>Name (for landmark / label / path)</h2>
 <div class="frow"><input type="text" id="name" placeholder="e.g. Ironhold"><button id="rn" title="Random name for this mode">🎲</button></div>
-<h2>View</h2><div class="grid" id="vis"></div>
+<h2>View</h2><div class="grid" id="vis"></div><div class="grid" style="margin-top:5px"><button id="fogall" title="Cover the whole map in fog, then reveal it bit by bit with 🔦 Reveal">☁️ Fog all</button><button id="fogclr">🔦 Clear fog</button></div><div class="grid" style="margin-top:5px"><button id="ptrail" title="Keep the party where it is but forget the route so far">🧹 Clear trail</button><button id="prem" title="Take the party token off this map">✕ Remove party</button></div>
+<button id="trb" style="margin-top:5px;width:100%" title="Load a sketch or reference image and paint over it. It is not saved or exported.">🖼️ Trace over an image…</button><input type="file" id="tfile" accept="image/*" hidden>
+<div id="trw" hidden style="margin-top:4px"><div class="frow" style="align-items:center"><span style="font-size:12px">Opacity</span><input type="range" id="trop" min="5" max="100" value="45" style="flex:1"><button id="trx" title="Remove the trace image" style="padding:4px 8px">✕</button></div><button id="trc" style="width:100%" title="Repaint every cell with the biome whose colour is closest to the image underneath. Undo reverts it.">🎨 Convert image to terrain</button></div>
 <h2>Factions</h2><div id="facs"></div>
-<button id="addfac" style="margin-top:4px">＋ Add faction</button><button id="fweb" style="margin-top:4px">🕸️ Relations web</button><button id="autof" style="margin-top:4px">🎲 Auto-assign territories</button>
+<button id="addfac" style="margin-top:4px">＋ Add faction</button><button id="fweb" style="margin-top:4px">🕸️ Relations web</button><button id="autof" style="margin-top:4px">🎲 Auto-assign territories</button><button id="adv" style="margin-top:4px" title="Simulate a decade: wars move borders, factions expand into empty land. Results are logged in the map notes.">⏳ Advance 10 years</button>
+<h2>📝 Map notes</h2><textarea id="mnotes" rows="4" placeholder="Session log, secrets, to-dos for this map…"></textarea>
+<h2>🎲 Dice</h2><div class="frow"><input type="text" id="dice" value="1d20" title="Dice notation, e.g. 2d6+3 or d20-1 or 4d6"><button id="droll">Roll</button></div><div class="grid" style="grid-template-columns:repeat(4,1fr)" id="dq"><button data-dq="d4" style="justify-content:center;padding:4px">d4</button><button data-dq="d6" style="justify-content:center;padding:4px">d6</button><button data-dq="d8" style="justify-content:center;padding:4px">d8</button><button data-dq="d10" style="justify-content:center;padding:4px">d10</button><button data-dq="d12" style="justify-content:center;padding:4px">d12</button><button data-dq="d20" style="justify-content:center;padding:4px">d20</button><button data-dq="d100" style="justify-content:center;padding:4px">d100</button><button data-dq="2d6" style="justify-content:center;padding:4px">2d6</button></div><div id="dout" style="font-size:13px;margin-top:6px"></div>
 <div id="globewrap" hidden><h2>Globe preview</h2><canvas id="globe" width="220" height="220" style="width:220px;height:220px;margin:auto;cursor:default"></canvas><input type="range" id="rot" min="0" max="100" value="0" title="Rotate"></div>
 </div>
 <div id="main">
 <div class="bar">
-<button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button id="gen">🎲 New random map</button><button id="pop" title="Add named landmarks and routes to this map">✨ Populate</button><select id="msize" title="Map size"><option value="64x40">Small</option><option value="96x60">Medium</option><option value="160x100">Large</option><option value="240x150">Huge</option></select>
-<button id="qsave">💾 Save</button><button id="proj">📁 Project</button><button id="leg">🧭 Legend</button><button id="demo" title="Load an example project: a fan-made Westeros and King's Landing">📜 Westeros demo</button>
-<button id="clear">🗑️ Clear</button>
+<select id="qtool" title="Current tool"></select><button id="undo">↶ Undo</button><button id="redo">↷ Redo</button><button id="gen" title="Generate a new random map in this mode">🎲 New map</button><button id="qworld" title="Generate a map, assign faction territories and populate it with places, roads and names in one go">🌍 Quick world</button><input type="number" id="seed" min="0" step="1" placeholder="Seed" title="Map seed. Type a number and press Enter to rebuild that exact map (same mode and size)."><button id="pop" title="Add named landmarks and routes to this map">✨ Populate</button><select id="msize" title="Map size"><option value="64x40">Small</option><option value="96x60">Medium</option><option value="160x100">Large</option><option value="240x150">Huge</option></select>
+<button id="qsave">💾 Save</button><span id="asv" style="align-self:center;font-size:11px;opacity:.65"></span><button id="proj">📁 Project</button><button id="leg">🧭 Legend</button><button id="gaz" title="List every named place on this map">📖 Places</button><button id="demo" title="Load an example project: a fan-made Westeros and King's Landing">📜 Demo</button>
+<button id="clear">🗑️ Clear</button><button id="theme" title="Editor colours: follow the system, light or dark">🌓</button>
 <button id="zout">➖</button><span id="zl" style="min-width:44px;text-align:center;align-self:center">100%</span><button id="zin">➕</button><button id="zreset">⤢ Fit</button><input type="text" id="find" list="finds" placeholder="🔎 Find…" style="width:130px"><datalist id="finds"></datalist>
 </div>
 <div class="bar" id="tabs"></div>
-<div id="wrap"><canvas id="c" width="1344" height="840"></canvas></div>
-<div id="info" hidden><div class="ihead"><span id="iicon" title="Click to change icon" style="cursor:pointer"></span><input type="text" id="iname" placeholder="Name"><button id="idel" title="Delete">🗑️</button><button id="iclose" title="Close">✕</button></div>
-<textarea id="idesc" rows="4" placeholder="Write the history, rumours, inhabitants…"></textarea><div style="margin-top:6px;display:flex;gap:6px"><select id="ilink" style="flex:1;min-width:0"></select><button id="iopen" hidden>↗ Open</button></div><div style="margin-top:6px"><button id="iflesh" title="Add atmosphere, a notable feature and a story hook">🪄 Flesh out description</button></div><div id="iland"></div></div>
+<div id="wrap"><canvas id="c" width="1344" height="840"></canvas><div id="bcur" hidden></div></div>
+<div id="info" hidden><div class="ihead"><span id="iicon" title="Click to change icon" style="cursor:pointer"></span><input type="text" id="iemo" title="Type or paste any emoji to use as this pin's icon" style="width:54px;flex:none;text-align:center" hidden><input type="text" id="iname" placeholder="Name"><button id="igm" title="GM only: hidden in 👁️ Player view, the gazetteer and exports made in player view">🔒</button><button id="idel" title="Delete">🗑️</button><button id="iclose" title="Close">✕</button></div>
+<textarea id="idesc" rows="4" placeholder="Write the history, rumours, inhabitants…"></textarea><div style="margin-top:6px;display:flex;gap:6px"><select id="ipsz" hidden title="Pin size"><option value="0.7">Small pin</option><option value="1">Normal pin</option><option value="1.4">Large pin</option><option value="1.8">Huge pin</option></select><select id="iptype" hidden title="Path type"></select><span id="ilab" hidden><select id="isz" title="Label size"><option value="0.7">Small</option><option value="1">Normal</option><option value="1.5">Large</option><option value="2.2">Huge</option></select><select id="irot" title="Label angle"><option value="-30">↗ -30°</option><option value="-15">↗ -15°</option><option value="0">→ 0°</option><option value="15">↘ 15°</option><option value="30">↘ 30°</option></select><input type="color" id="icol" title="Label colour"></span><select id="ilink" style="flex:1;min-width:0"></select><button id="iopen" hidden>↗ Open</button></div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><button id="iflesh" title="Add atmosphere, a notable feature and a story hook">🪄 Flesh out description</button> <button id="ienc" title="Roll a random encounter suited to the terrain here">🎲 Roll encounter</button><button id="inpc" title="Add a character who lives or works here">👤 Add NPC</button><button id="iwx" title="Roll today's weather for this spot">🌦️ Weather</button><button id="icopy" title="Copy this place as text, ready to paste into chat or notes">📋 Copy</button></div><div id="iland"></div></div>
 <div id="sumc" hidden></div>
-<div id="hint"></div>
-<div id="tip" hidden></div>
+<div id="stat" style="font-size:12px;margin-top:4px;min-height:1.4em;opacity:.85"></div><div id="hint"></div>
+<div id="tip" hidden></div><div id="ctx" hidden></div>
 <div id="fmodal" hidden><div id="fbox"></div></div>
 <div id="modal" hidden><div id="mbox">
 <div class="ihead"><b style="flex:1;font-size:16px">📁 Project</b><button data-a="close">✕</button></div>
 <h2>Project name</h2><div class="frow"><input type="text" id="pname"><button data-a="save">💾 Save slot</button></div>
-<div id="slots"></div>
+<div id="slots"></div><h2>🕘 Automatic backups</h2><div id="bks"></div>
 <h2>Maps in this project</h2><div id="mlist"></div>
 <h2>Export / import (JSON)</h2>
 <textarea id="jtxt" rows="4" placeholder="Export fills this box. Paste a project here to import it."></textarea>
-<div class="bar" style="margin-top:6px"><button data-a="exp">Export</button><button data-a="copy">Copy</button><button data-a="expdl">Save .json</button><button data-a="imp">Import from box</button><button data-a="csv">Pins CSV</button><button data-a="csvdl">Save .csv</button></div>
-<h2>Lore document</h2><div class="bar"><button data-a="lore">Generate</button><button data-a="lcopy">Copy</button><button data-a="ldl">Save .md</button></div>
+<div class="bar" style="margin-top:6px"><button data-a="exp">Export</button><button data-a="copy">Copy</button><button data-a="expdl">Save .json</button><button data-a="imp">Import from box</button><button data-a="openf" title="Or drop a .json file onto the map">Open .json file</button><input type="file" id="jfile" accept=".json,application/json" hidden><button data-a="csv">Pins CSV</button><button data-a="csvdl">Save .csv</button></div>
+<h2>Lore document</h2><div class="bar"><button data-a="lore">Generate</button><button data-a="chron" title="Invent a timeline of events using this map's factions and places">📜 Add chronicle</button><button data-a="lcopy">Copy</button><button data-a="ldl">Save .md</button></div>
 <textarea id="ltxt" rows="5"></textarea>
-<h2>Image</h2><div class="bar"><button data-a="png">Render PNG</button><button data-a="pngdl">Save PNG</button></div><img id="pimg" hidden alt="Map render">
+<h2>Image</h2><div class="bar"><select id="pscale" title="Resolution of the exported image"><option value="1">1× size</option><option value="2">2× (print)</option><option value="3">3× (poster)</option></select><button data-a="png">Render PNG</button><button data-a="pngdl">Save PNG</button><button data-a="hand" title="Save a PNG as players should see it: fog of war applied, GM-only items hidden">👁️ Player handout</button><button data-a="webp" title="One web page with every map in this project as tabs; pins that link to another map open it (player view)">🌐 Whole project page</button><button data-a="web" title="Save a stand-alone web page with the map and clickable pins (player view: fog and GM-only items are hidden)">🌐 Interactive page</button></div><img id="pimg" hidden alt="Map render">
 <div id="mmsg" style="margin-top:8px;font-style:italic"></div>
 <div class="bar" style="margin-top:10px"><button data-a="newproj">🆕 New project</button></div>
 </div></div>
@@ -91,7 +99,8 @@ canvas{display:block;width:100%;touch-action:none;cursor:crosshair}
 <script>
 (function(){
 function run(host,root,app){
-const setTheme=()=>{const t=host.getAttribute('theme')||'auto';app.dataset.theme=t=='auto'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):t};setTheme();try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',setTheme)}catch(e){}
+let tpref='';try{tpref=localStorage.getItem('fmm-theme')||''}catch(e){}
+const setTheme=()=>{const t=tpref||host.getAttribute('theme')||'auto';app.dataset.theme=t=='auto'?(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'):t};setTheme();try{matchMedia('(prefers-color-scheme:dark)').addEventListener('change',setTheme)}catch(e){}
 const fit=()=>{const n=host.clientWidth>0&&host.clientWidth<700;app.classList.toggle('narrow',n);host.classList.toggle('mm-narrow',n)};fit();if(typeof ResizeObserver!='undefined')new ResizeObserver(fit).observe(host);
 root.addEventListener('pointerdown',e=>{if(!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))app.focus({preventScroll:true})});
 
@@ -100,34 +109,130 @@ let BIOMES=[],MARKS=[],FLAV=[];const FBIO=[["Ocean","#2b5d8a","w"],["Grassland",
 const FMARK=["🏰","🏘️","🏙️","⚓","🗼","🏛️","⛰️","🕳️","🌋","🐉","⚔️","🌲","⛪","🏚️"];
 let ter=new Uint8Array(W*H),fac=new Uint8Array(W*H),marks=[],
 facs=[{n:"Red Legion",c:"#d33b3b"},{n:"Azure Court",c:"#3b7bd3"},{n:"Gold Compact",c:"#d3a93b"},{n:"Verdant Pact",c:"#3bd36a"}],
-meas=null,mv=null,sc={v:6,u:"mi"},maps=[{id:"m0",name:"World Map",d:null}],cur="m0",proj="My World",back=[],ptp=0,dr=null,ms=1,mode="fantasy",ptype="terran",M=null,tool="pan",view={z:1,x:0,y:0},sel=null,biome=1,mark=0,fsel=1,undos=[],redos=[],bd=null,sv=null,grid=0,gsz=5,vis={f:1,p:1,r:1,m:1,n:1,s:1,k:0},fi=0,painting=false;
+meas=null,mv=null,sc={v:6,u:"mi"},maps=[{id:"m0",name:"World Map",d:null}],cur="m0",proj="My World",back=[],ptp=0,dr=null,ms=1,mode="fantasy",ptype="terran",M=null,tool="pan",view={z:1,x:0,y:0},sel=null,biome=1,mark=0,fsel=1,undos=[],redos=[],bd=null,sv=null,grid=0,gsz=5,vis={f:1,p:1,r:1,m:1,n:1,s:1,k:0,o:1,h:1},fi=0,painting=false,seed=0,bedit=0,mini=null,mmd=null,rt=null,fog=new Uint8Array(W*H),hd=1,rend=0,trImg=null,spc=0,nudgeT=0,pd=null,party=null,box=null,gmv=null,notes='',era=0;const msel=new Set();
+const PAINT=new Set(['biome','erase','faction','unfac','fog','unfog']);
+function mkHeap(){const k=[],v=[];return{get size(){return v.length},push(x,p){k.push(p);v.push(x);let c=v.length-1;while(c){const q=(c-1)>>1;if(k[q]<=k[c])break;[k[q],k[c]]=[k[c],k[q]];[v[q],v[c]]=[v[c],v[q]];c=q}},
+ pop(){const r=v[0],lk=k.pop(),lv=v.pop();if(v.length){k[0]=lk;v[0]=lv;let c=0;for(;;){const a=2*c+1,b=a+1;let m=c;if(a<v.length&&k[a]<k[m])m=a;if(b<v.length&&k[b]<k[m])m=b;if(m==c)break;[k[m],k[c]]=[k[c],k[m]];[v[m],v[c]]=[v[c],v[m]];c=m}}return r}}}
+function cellCost(b,wat){if(mode=='space')return[1,1.3,1.3,1.5,3,1,4,6,4][b]||1;if(mode=='sky')return b==2?6:b==1?1.5:1;
+ if(mode=='town')return b==7?(wat?1:Infinity):b==1?.5:b==0?1.5:b==8?3:4;
+ if(wat)return b==0?1:Infinity;return b==0?Infinity:([0,1,2,2.5,9,2,4,4,3,1.2][b]||2)}
+// A* over the cell grid; terrain sets the cost and existing paths of the same type are cheap, so routes join up into networks.
+function autoRoute(a,b){const T=pp()[ptp]||{n:''},wat=/sea|ship/i.test(T.n)&&mode!='sky',pts=routePts(a,b,ptp,wat);
+ if(pts=='same'){flash('Start and destination are the same spot.');draw();return}
+ if(!pts){flash(wat?'No route by water between those points.':'No route found: the way is blocked (water or impassable terrain).');draw();return}
+ snap();const nm=$('name').value.trim();$('name').value='';const mid=pts[pts.length>>1];
+ marks.push({pts,t:ptp,n:nm,d:'',x:mid[0],y:mid[1],i:'',l:false});select(marks.length-1);flash(`${T.n||'Route'} laid along the easiest ground: about ${Math.round(plen(marks[marks.length-1])*sc.v)} ${sc.u}.`)}
+function routePts(a,b,ptp,wat){const cl=(v,m)=>Math.max(0,Math.min(m-1,v/S|0)),s=cl(a[1],H)*W+cl(a[0],W),g=cl(b[1],H)*W+cl(b[0],W);if(s==g)return 'same';
+ const N=W*H,cost=new Float32Array(N),best=new Float32Array(N).fill(Infinity),from=new Int32Array(N).fill(-1),done=new Uint8Array(N);
+ for(let i=0;i<N;i++)cost[i]=cellCost(ter[i],wat);
+ for(const m of marks)if(m.pts&&m.t==ptp)for(let i=1;i<m.pts.length;i++){const p=m.pts[i-1],q=m.pts[i],n=Math.ceil(Math.hypot(q[0]-p[0],q[1]-p[1])/(S/2))+1;for(let k=0;k<=n;k++){const j=cl(p[1]+(q[1]-p[1])*k/n,H)*W+cl(p[0]+(q[0]-p[0])*k/n,W);if(isFinite(cost[j]))cost[j]=Math.min(cost[j],.35)}}
+ const er=wat?3:2;for(const e of[s,g]){const ex=e%W,ey=e/W|0;for(let dy=-er;dy<=er;dy++)for(let dx=-er;dx<=er;dx++){const x=ex+dx,y=ey+dy;if(x>=0&&y>=0&&x<W&&y<H&&!isFinite(cost[y*W+x]))cost[y*W+x]=3}}
+ const gx=g%W,gy=g/W|0,hq=mkHeap();best[s]=0;hq.push(s,0);let found=0;
+ while(hq.size){const i=hq.pop();if(i==g){found=1;break}if(done[i])continue;done[i]=1;const x=i%W,y=i/W|0;
+  for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const j=yy*W+xx,c=cost[j];if(!isFinite(c)||done[j])continue;
+   const nb=best[i]+c*(dx&&dy?1.414:1);if(nb<best[j]){best[j]=nb;from[j]=i;hq.push(j,nb+Math.hypot(xx-gx,yy-gy)*.9)}}}
+ if(!found)return null;
+ const C=[];for(let c=g;c>=0;c=from[c])C.push(c);C.reverse();
+ const pts=[a];for(let i=3;i<C.length-2;i+=3)pts.push([(C[i]%W+.5)*S,((C[i]/W|0)+.5)*S]);pts.push(b);return pts}
+// travel estimates per mode: days on foot/horse/ship (fantasy), skyship days, rover days (planet), warp days (space), walking minutes (settlement)
+function units(d){const u=sc.u.toLowerCase();return{mi:u=='mi'?d:u=='km'?d*.621:u=='m'?d/1609:u=='yd'?d/1760:u=='ft'?d/5280:0,ly:u=='ly'?d:u=='pc'?d*3.26:0}}
+function travel(d,kind){const{mi,ly}=units(d),f=v=>v<1?'under a day':(v<10?v.toFixed(1):Math.round(v))+' days';
+ if(mode=='space')return ly?` About ${f(ly/2)} at standard warp (2 ly a day).`:'';if(!mi)return '';
+ if(mode=='town'){const m=mi*26.8;return ` About ${m<1?'a minute':Math.round(m)+' minutes'} on foot.`}
+ if(mode=='planet')return ` About ${f(mi*1.609/400)} by rover, ${mi*1.609/900<1?'under an hour':(mi*1.609/900).toFixed(1)+' hours'} by flyer.`;
+ if(mode=='sky')return ` About ${f(mi/120)} by skyship.`;if(/sea|ship/i.test(kind||''))return ` About ${f(mi/110)} under sail.`;if(/river/i.test(kind||''))return ` About ${f(mi/50)} by riverboat.`;
+ return ` About ${f(mi/24)} on foot, ${f(mi/40)} on horseback.`}
 const $=id=>root.getElementById(id);
 const hash=(x,y)=>{let h=(x*374761393+y*668265263)^(x*y*1274126177);h=(h^(h>>>13))*1274126177;return((h^(h>>>16))>>>0)/4294967295};
-const TOOLS=[["pan","✋ Pan / Inspect"],["biome","🖌️ Paint biome"],["erase","🧽 Erase"],["fill","🪣 Fill"],["mark","📍 Landmark"],["label","🔤 Label"],["path","〰️ Draw path"],["faction","🚩 Paint faction"],["unfac","⬜ Clear faction"],["region","🏷️ District"],["building","🏠 Building"],["measure","📏 Measure"],["survey","🔍 Survey area"],["remove","❌ Remove pin"]];
-function ui(){cv.style.cursor=tool=='pan'?'grab':'crosshair';$('modes').innerHTML=Object.keys(MODES).map(k=>`<button data-mo="${k}" class="${mode==k?'on':''}" style="justify-content:center">${MODES[k].n}</button>`).join('');
- $('paths').innerHTML=pp().map((p,i)=>`<button data-pp="${i}" class="${tool=='path'&&ptp==i?'on':''}"><span class="sw" style="background:${p.c}"></span>${p.n}</button>`).join('');$('tools').innerHTML=TOOLS.map(t=>`<button data-t="${t[0]}" title="Shortcut: ${(HK[t[0]]||'').toUpperCase()}" class="${tool==t[0]?'on':''}">${t[1]}</button>`).join('');
- $('biomes').innerHTML=BIOMES.map((b,i)=>`<button data-b="${i}" class="${biome==i?'on':''}"><span class="sw" style="background:${b[1]}"></span>${b[0]}</button>`).join('');
+const TOOLS=[["pan","✋ Pan / Inspect"],["biome","🖌️ Paint biome"],["erase","🧽 Erase"],["fill","🪣 Fill"],["mark","📍 Landmark"],["label","🔤 Label"],["path","〰️ Draw path"],["faction","🚩 Paint faction"],["unfac","⬜ Clear faction"],["region","🏷️ District"],["building","🏠 Building"],["measure","📏 Measure"],["survey","🔍 Survey area"],["route","🧭 Auto route"],["party","🧙 Move party"],["fog","☁️ Hide (fog)"],["unfog","🔦 Reveal"],["remove","❌ Remove pin"]];
+function ui(){const qt=$('qtool');if(!qt.options.length)qt.innerHTML=TOOLS.map(t=>`<option value="${t[0]}">${t[1]}</option>`).join('');qt.value=tool;cv.style.cursor=tool=='pan'?'grab':'crosshair';if(!PAINT.has(tool))$('bcur').hidden=true;if(tool!='route')rt=null;$('modes').innerHTML=Object.keys(MODES).map(k=>`<button data-mo="${k}" class="${mode==k?'on':''}" style="justify-content:center">${MODES[k].n}</button>`).join('');
+ $('paths').innerHTML=pp().map((p,i)=>`<button data-pp="${i}" class="${(tool=='path'||tool=='route')&&ptp==i?'on':''}"><span class="sw" style="background:${p.c}"></span>${p.n}</button>`).join('');$('tools').innerHTML=TOOLS.map(t=>`<button data-t="${t[0]}" title="Shortcut: ${(HK[t[0]]||'').toUpperCase()}" class="${tool==t[0]?'on':''}">${t[1]}</button>`).join('');
+ {const pmv=$('pmask').value||'a';$('pmask').innerHTML=`<option value="a">Anything</option><option value="l">Anything but ${esc(BIOMES[0][0])}</option>`+BIOMES.map((b,i)=>`<option value="${i}">${esc(b[0])} only</option>`).join('');$('pmask').value=[...$('pmask').options].some(o=>o.value==pmv)?pmv:'a'}$('biomes').style.gridTemplateColumns=bedit?'1fr':'';$('biomes').innerHTML=bedit?BIOMES.map((b,i)=>`<div class="frow" style="margin:0"><input type="color" data-bc="${i}" value="${b[1]}"><input type="text" data-bn="${i}" value="${esc(b[0])}"></div>`).join('')+'<button id="breset" title="Restore the default biome names and colours">↺ Reset to defaults</button>':BIOMES.map((b,i)=>`<button data-b="${i}" class="${biome==i?'on':''}"><span class="sw" style="background:${b[1]}"></span>${esc(b[0])}</button>`).join('');$('bedit').classList.toggle('on',!!bedit);$('bedit').textContent=bedit?'✓ Done editing':'🎨 Edit biomes';
  $('marks').innerHTML=MARKS.map((m,i)=>`<button data-m="${i}" class="${mark==i?'on':''}" style="justify-content:center;font-size:18px">${m}</button>`).join('');
- $('vis').innerHTML=[['s','✨ Smooth edges'],['k','🖼️ Frame & compass'],['f','🚩 Factions'],['p','〰️ Paths'],['r','🏷️ Districts'],['m','📍 Pins'],['n','🔤 Names']].map(v=>`<button data-v="${v[0]}" class="${vis[v[0]]?'on':''}">${v[1]}</button>`).join('');$('vis').innerHTML+=`<button data-g="1" class="${grid?'on':''}">${['▦ Grid: off','▦ Grid: square','⬡ Grid: hex'][grid]}</button>`;$('facs').innerHTML=facs.map((f,i)=>`<div class="frow"><button data-f="${i+1}" class="${fsel==i+1?'on':''}" style="padding:4px"><span class="sw" style="background:${f.c}"></span></button><input type="text" data-fn="${i}" value="${esc(f.n)}"><input type="color" data-fc="${i}" value="${f.c}"><button data-fe="${i}" title="Details & relations" style="padding:4px">⚙️</button></div>`).join('');
+ $('vis').innerHTML=[['s','✨ Smooth edges'],['a','📜 Parchment style'],['h','⛰️ Relief shading'],['c','🗻 Contour lines'],['k','🖼️ Frame & compass'],['f','🚩 Factions'],['p','〰️ Paths'],['r','🏷️ Districts'],['m','📍 Pins'],['n','🔤 Names'],['o','🗺️ Minimap'],['w','☁️ Fog of war'],['y','👁️ Player view']].map(v=>`<button data-v="${v[0]}" class="${vis[v[0]]?'on':''}">${v[1]}</button>`).join('');$('vis').innerHTML+=`<button data-g="1" class="${grid?'on':''}">${['▦ Grid: off','▦ Grid: square','⬡ Grid: hex'][grid]}</button>`;$('facs').innerHTML=facs.map((f,i)=>`<div class="frow"><button data-f="${i+1}" class="${fsel==i+1?'on':''}" style="padding:4px"><span class="sw" style="background:${f.c}"></span></button><input type="text" data-fn="${i}" value="${esc(f.n)}"><input type="color" data-fc="${i}" value="${f.c}"><button data-fe="${i}" title="Details & relations" style="padding:4px">⚙️</button></div>`).join('');
 }
 root.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
  if(b.dataset.t){tool=b.dataset.t}else if(b.dataset.b){biome=+b.dataset.b;tool='biome'}
- else if(b.dataset.m){mark=+b.dataset.m;tool='mark'}else if(b.dataset.f){fsel=+b.dataset.f;tool='faction'}else if(b.dataset.mo){snap();applyMode(b.dataset.mo);setDims(W,H);generate()}else if(b.dataset.pp){ptp=+b.dataset.pp;tool='path'}else if(b.dataset.tab){openMap(b.dataset.tab,false)}else if(b.dataset.back){openMap(back.pop(),false)}else if(b.dataset.new){const id=mkMap('Map '+(maps.length+1));openMap(id,false)}else if(b.dataset.v){vis[b.dataset.v]=!vis[b.dataset.v];draw()}else if(b.dataset.g){grid=(grid+1)%3;draw()}else if(b.dataset.fe){openFac(+b.dataset.fe)}else return;ui()});
+ else if(b.dataset.m){mark=+b.dataset.m;tool='mark'}else if(b.dataset.f){fsel=+b.dataset.f;tool='faction'}else if(b.dataset.mo){snap();applyMode(b.dataset.mo);setDims(W,H);generate()}else if(b.dataset.pp){ptp=+b.dataset.pp;if(tool!='route')tool='path'}else if(b.dataset.tab){openMap(b.dataset.tab,false)}else if(b.dataset.back){openMap(back.pop(),false)}else if(b.dataset.new){const id=mkMap('Map '+(maps.length+1));openMap(id,false)}else if(b.dataset.v){vis[b.dataset.v]=!vis[b.dataset.v];draw()}else if(b.dataset.g){grid=(grid+1)%3;draw()}else if(b.dataset.fe){openFac(+b.dataset.fe)}else return;ui()});
 root.addEventListener('input',e=>{const d=e.target.dataset;
  if(d.fn!==undefined){facs[d.fn].n=e.target.value;draw()}
- if(d.fc!==undefined){facs[d.fc].c=e.target.value;draw();ui()}});
+ if(d.fc!==undefined){facs[d.fc].c=e.target.value;const sw=root.querySelector(`[data-f="${+d.fc+1}"] .sw`);if(sw)sw.style.background=e.target.value;draw()}
+ if(d.bc!==undefined&&BIOMES[d.bc]){BIOMES[d.bc][1]=e.target.value;draw()}
+ if(d.bn!==undefined&&BIOMES[d.bn]){BIOMES[d.bn][0]=e.target.value||'Unnamed';draw()}});
+function defBiomes(){const P=mode=='planet'?PT[ptype]:mode=='town'?TS[ptype]:null;return P?P.b.map((e,i)=>[e[0],e[1],P.dc[i]]):M.b.map(e=>e.slice())}
+$('bedit').onclick=()=>{bedit=!bedit;ui()};
+$('biomes').addEventListener('click',e=>{if(e.target.id=='breset'){BIOMES=defBiomes();ui();draw()}});
+$('qworld').onclick=()=>{snap();generate();if(mode!='town')autoFactions(1);else autoDistricts(1);populate(1);vis.f=1;ui();draw();flash(`Quick world built from seed ${seed}: terrain, territories, places and routes. One undo removes it all.`)};
+$('qtool').onchange=e=>{tool=e.target.value;ui()};
 $('size').oninput=e=>$('bs').textContent=e.target.value;
-$('addfac').onclick=()=>{facs.push({n:"New Faction",c:"#"+Math.floor(hash(facs.length,7)*0xffffff).toString(16).padStart(6,'0')});fsel=facs.length;tool='faction';ui()};
-function shot(){return[ter.slice(),fac.slice(),JSON.stringify(marks),W,H,mode,ptype,JSON.stringify(facs)]}
-function snap(){undos.push(shot());redos=[];if(undos.length>30)undos.shift()}
-function restore(s){if(s[3]!=W||s[4]!=H)setDims(s[3],s[4]);if(s[5]!=mode||s[6]!=ptype){applyMode(s[5],s[6]);facs=JSON.parse(s[7])}ter=s[0];fac=s[1];marks=JSON.parse(s[2]);ui();select(null)}
+$('fogall').onclick=()=>{snap();fog.fill(1);vis.w=1;tool='unfog';ui();draw();flash('Map fogged. Use 🔦 Reveal to uncover what the players have explored; 👁️ Player view hides it completely.')};
+$('trb').onclick=()=>$('tfile').click();
+$('tfile').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const im=new Image();im.onload=()=>{trImg=im;$('trw').hidden=false;draw();flash('Trace image loaded under the map overlays. Paint over it, then remove it with ✕.')};im.onerror=()=>flash('Could not read that image.');im.src=URL.createObjectURL(f)};
+$('trop').oninput=()=>draw();
+// image to terrain: sample the image under each cell (same fit as the overlay) and pick the nearest biome colour
+$('trc').onclick=()=>{if(!trImg)return;const iw=trImg.naturalWidth,ih=trImg.naturalHeight,f=Math.min(W/iw,H/ih),g=document.createElement('canvas');g.width=W;g.height=H;const c=g.getContext('2d');
+ c.imageSmoothingEnabled=true;c.drawImage(trImg,(W-iw*f)/2,(H-ih*f)/2,iw*f,ih*f);let d;try{d=c.getImageData(0,0,W,H).data}catch(x){return flash('This image cannot be read (it may come from another site).')}
+ const C=BIOMES.map(b=>[1,3,5].map(k=>parseInt(b[1].slice(k,k+2),16)));snap();let n=0;
+ for(let i=0;i<W*H;i++){if(d[i*4+3]<128)continue;let bi=0,bd=1e9;for(let k=0;k<C.length;k++){const dr=d[i*4]-C[k][0],dg=d[i*4+1]-C[k][1],db=d[i*4+2]-C[k][2],v=dr*dr*.3+dg*dg*.59+db*db*.11;if(v<bd){bd=v;bi=k}}ter[i]=bi;n++}
+ draw();flash(`Painted ${n} cells from the image. Tip: 🎨 Edit biomes to match your image's colours first, then convert again. Undo reverts.`)};$('trx').onclick=()=>{if(trImg)URL.revokeObjectURL(trImg.src);trImg=null;$('trw').hidden=true;draw()};
+// party token: travels along the easiest route (roads are cheapest), leaves a trail and clears fog as it goes
+function revealAlong(P,r){let any=0;for(const v of fog)if(v){any=1;break}if(!any)return;for(let i=0;i<P.length;i++){const a=P[i],b=P[i+1]||a,n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/(S/2)));
+ for(let k=0;k<=n;k++){const cx=(a[0]+(b[0]-a[0])*k/n)/S|0,cy=(a[1]+(b[1]-a[1])*k/n)/S|0;for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){const x=cx+dx,y=cy+dy;if(x>=0&&y>=0&&x<W&&y<H&&dx*dx+dy*dy<=r*r+1)fog[y*W+x]=0}}}}
+function tdays(d){const{mi,ly}=units(d);return mode=='space'?ly/2:mode=='sky'?mi/120:mode=='fantasy'?mi/24:mode=='planet'?mi*1.609/400:0}
+function moveParty(x,y){snap();if(!party){party={x,y,trail:[[x,y]],d:0};revealAlong([[x,y]],4);draw();return flash('🧙 Party placed. Click elsewhere with this tool to travel; the route follows roads and easy ground and clears fog on the way.')}
+ let P=routePts([party.x,party.y],[x,y],1,false),note='';if(P=='same'){undos.pop();return}if(!P){P=[[party.x,party.y],[x,y]];note=' No land route, so they took the direct way (by boat?).'}
+ const len=P.reduce((t,p,i)=>i?t+Math.hypot(p[0]-P[i-1][0],p[1]-P[i-1][1]):0,0)/S*sc.v;party.trail.push(...P.slice(1).map(p=>[Math.round(p[0]),Math.round(p[1])]));if(party.trail.length>4000)party.trail=party.trail.slice(-4000);const near=(px,py)=>{let b=null,bd=1e18;for(const m of marks)if(!m.pts&&!m.reg&&!m.l&&m.n){const d=(m.x-px)**2+(m.y-py)**2;if(d<bd){bd=d;b=m}}return b&&Math.sqrt(bd)<S*6?b.n:'open country near '+(b?b.n:'nowhere')};const lg={from:near(party.x,party.y),to:near(x,y),d:+len.toFixed(1),days:+tdays(len).toFixed(1)};(party.log=party.log||[]).push(lg);if(party.log.length>200)party.log.shift();
+ party.d+=len;party.days=(party.days||0)+tdays(len);party.x=x;party.y=y;
+ revealAlong(P,4);draw();const f=v=>(v<10?v.toFixed(1):Math.round(v))+' '+sc.u;flash(`🧙 Leg of ${f(len)}.${travel(len)} Journey so far: ${f(party.d)}.${note}`)}
+function drawParty(){if(!party)return;const T=party.trail,k=ms;ctx.setLineDash([2*k,5*k]);ctx.lineCap='round';ctx.strokeStyle='rgba(0,0,0,.5)';ctx.lineWidth=4.5*k;ctx.beginPath();T.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.stroke();
+ ctx.strokeStyle='#ff7a45';ctx.lineWidth=2.5*k;ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(20,17,12,.75)';ctx.strokeStyle='#ff7a45';ctx.lineWidth=2*k;ctx.beginPath();ctx.arc(party.x,party.y,15*k,0,7);ctx.fill();ctx.stroke();
+ ctx.font=20*k+'px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🧙',party.x,party.y+1*k);if(vis.n)lbl('Party · '+(party.days?'Day '+Math.max(1,Math.ceil(party.days))+' · ':'')+(party.d<10?party.d.toFixed(1):Math.round(party.d))+' '+sc.u,party.x,party.y,12*k,'#ffc8a8',{pr:0,kind:'pin'})}
+$('ptrail').onclick=()=>{if(!party)return flash('No party on this map yet. Use 🧙 Move party to place one.');snap();party.trail=[[party.x,party.y]];party.d=0;party.days=0;party.log=[];draw()};
+$('prem').onclick=()=>{if(!party)return;snap();party=null;draw()};
+$('mnotes').oninput=e=>{notes=e.target.value;touch()};
+// dice: NdM terms and flat numbers joined by + or -, e.g. 2d6+1d4-1
+const dhist=[];function roll(t){const ex=String(t).toLowerCase().replace(/\s+/g,'');if(!/^[+-]?(\d*d\d+|\d+)([+-](\d*d\d+|\d+))*$/.test(ex))return null;let tot=0;const parts=[];
+ for(const m of ex.matchAll(/([+-]?)(\d*)d(\d+)|([+-]?)(\d+)/g)){if(m[3]){const n=Math.min(100,+(m[2]||1)),sd=Math.min(1000,+m[3]),sg=m[1]=='-'?-1:1,r=[];for(let i=0;i<n;i++)r.push(1+Math.floor(Math.random()*sd));tot+=sg*r.reduce((a,b)=>a+b,0);parts.push((sg<0?'−':'')+'['+r.join(', ')+']')}else if(m[5]){const v=+m[5]*(m[4]=='-'?-1:1);tot+=v;parts.push(String(v))}}
+ return{ex,tot,txt:parts.join(' + ').replace(/\+ −/g,'− ').replace(/\+ -/g,'− ')}}
+function doRoll(t){const r=roll(t);if(!r){$('dout').innerHTML='<i>Try something like 2d6+3.</i>';return}dhist.unshift(`<b>${esc(r.ex)}</b>: ${esc(r.txt)} = <b style="font-size:15px">${r.tot}</b>`);dhist.length=Math.min(dhist.length,5);$('dout').innerHTML=dhist.map((h,i)=>`<div style="opacity:${1-i*.17}">${h}</div>`).join('')}
+$('droll').onclick=()=>doRoll($('dice').value);$('dice').onkeydown=e=>{if(e.key=='Enter')doRoll(e.target.value)};$('dq').onclick=e=>{const b=e.target.closest('[data-dq]');if(b){$('dice').value=b.dataset.dq;doRoll(b.dataset.dq)}};
+$('theme').onclick=()=>{const o=['auto','light','dark'],t=o[(o.indexOf(tpref||'auto')+1)%3];tpref=t=='auto'?'':t;try{tpref?localStorage.setItem('fmm-theme',tpref):localStorage.removeItem('fmm-theme')}catch(e){}setTheme();$('theme').textContent={auto:'🌓',light:'☀️',dark:'🌙'}[t];flash('Editor theme: '+{auto:'follow system',light:'light',dark:'dark'}[t],1500)};$('theme').textContent={'':'🌓',light:'☀️',dark:'🌙'}[tpref]||'🌓';
+// a decade of history: border cells change hands between warring/rival factions (larger realms push harder) and realms grow into empty land
+function advance(){if(!facs.length)return flash('Add factions first.');snap();undos[undos.length-1].adv=1;const n=facs.length,size=new Array(n+1).fill(0);for(const v of fac)if(v<=n)size[v]++;
+ const ok=i=>mode=='space'?true:mode=='sky'?ter[i]>=3&&ter[i]<=6:mode=='town'?ter[i]>=1:ter[i]>0,rel=(a,b)=>((facs[a-1]||{}).rel||{})[b-1]||'Neutral',P={'At war':.13,'Rival':.04,'Neutral':.012,'Friendly':.002,'Allied':0};
+ const gain=Array.from({length:n+1},()=>new Array(n+1).fill(0)),before=marks.filter(m=>!m.pts&&!m.reg&&!m.l&&m.n).map(m=>[m,fac[Math.min(H-1,m.y/S|0)*W+Math.min(W-1,m.x/S|0)]]);
+ for(let step=0;step<6;step++){const nf=fac.slice();for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x;if(!ok(i))continue;const o=fac[i];
+   for(const j of[x>0?i-1:-1,x<W-1?i+1:-1,y>0?i-W:-1,y<H-1?i+W:-1]){if(j<0)continue;const a=fac[j];if(!a||a==o||a>n)continue;
+    const pr=!o?.25:P[rel(a,o)]*Math.min(3,Math.max(.3,(size[a]+1)/(size[o]+1)));if(Math.random()<pr){nf[i]=a;if(o)gain[a][o]++;else gain[a][0]++;break}}}fac=nf}
+ era+=10;const yr=`Year +${era}`,ev=[];for(let a=1;a<=n;a++){for(let b=1;b<=n;b++)if(gain[a][b]>4)ev.push(`${facs[a-1].n} took ${gain[a][b]} cells from ${facs[b-1].n}.`);if(gain[a][0]>8)ev.push(`${facs[a-1].n} settled ${gain[a][0]} cells of open land.`)}
+ for(const[m,o]of before){const f=fac[Math.min(H-1,m.y/S|0)*W+Math.min(W-1,m.x/S|0)];if(f!=o&&f&&facs[f-1])ev.push(`${m.n} ${o&&facs[o-1]?'fell to':'joined'} ${facs[f-1].n}${o&&facs[o-1]?' (from '+facs[o-1].n+')':''}.`)}
+ if(!ev.length)ev.push('A quiet decade: borders held. Set some factions to Rival or At war (⚙️) for more upheaval.');
+ notes=(notes?notes.trimEnd()+'\n\n':'')+`⏳ ${yr}\n- `+ev.join('\n- ');$('mnotes').value=notes;vis.f=1;ui();draw();flash(`${yr}: ${ev.slice(0,2).join(' ')}${ev.length>2?' (+'+(ev.length-2)+' more in Map notes)':''}`,8000)}
+$('adv').onclick=advance;
+$('fogclr').onclick=()=>{snap();fog.fill(0);draw()};
+const hidP=m=>vis.y&&(m.gm||fogAt(m.x,m.y)),fogAt=(x,y)=>vis.w&&fog[Math.min(H-1,Math.max(0,y/S|0))*W+Math.min(W-1,Math.max(0,x/S|0))];
+function drawFog(x0,x1,y0,y1){if(!vis.w)return;let any=0;for(let i=0;i<fog.length;i++)if(fog[i]){any=1;break}if(!any)return;
+ const pl=vis.y;ctx.save();ctx.setLineDash([]);ctx.beginPath();for(let y=Math.max(0,y0-1);y<Math.min(H,y1+1);y++)for(let x=Math.max(0,x0-1);x<Math.min(W,x1+1);x++)if(fog[y*W+x]){const cx=(x+.5)*S,cy=(y+.5)*S,r=S*.8;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}
+ ctx.fillStyle=pl?'#2a2620':'rgba(24,21,16,.5)';if(pl){ctx.shadowColor='#2a2620';ctx.shadowBlur=14*view.z}ctx.fill();ctx.shadowBlur=0;
+ if(tex){ctx.clip();ctx.globalAlpha=pl?.9:.5;ctx.imageSmoothingEnabled=true;ctx.drawImage(tex,0,0,W*S,H*S);ctx.drawImage(tex,-W*S*.5,-H*S*.5,W*S*2,H*S*2)}ctx.restore()}
+$('addfac').onclick=()=>{snap();facs.push({n:"New Faction",c:"#"+Math.floor(hash(facs.length,7)*0xffffff).toString(16).padStart(6,'0')});fsel=facs.length;tool='faction';ui()};
+function shot(){return[ter.slice(),fac.slice(),JSON.stringify(marks),W,H,mode,ptype,JSON.stringify(facs),fog.slice(),JSON.stringify(party),JSON.stringify(sc),notes,era]}
+function snap(){undos.push(shot());redos=[];if(undos.length>60)undos.shift()}
+function restore(s){if(s[3]!=W||s[4]!=H)setDims(s[3],s[4]);const fs=JSON.parse(s[7]);if(s[5]!=mode||s[6]!=ptype){applyMode(s[5],s[6]);facs=fs}else if(fs.length!=facs.length){facs=fs;fsel=Math.min(fsel,facs.length)||1}ter=s[0];fac=s[1];fog=s[8]||new Uint8Array(W*H);party=s[9]?JSON.parse(s[9]):null;msel.clear();if(s[10]){sc=JSON.parse(s[10]);scUI()}if(s.adv){notes=s[11]||'';era=s[12]||0;$('mnotes').value=notes}marks=JSON.parse(s[2]);ui();select(null)}
 $('redo').onclick=()=>{const s=redos.pop();if(!s)return;undos.push(shot());restore(s)};
 $('undo').onclick=()=>{const s=undos.pop();if(!s)return;redos.push(shot());restore(s)};
-$('clear').onclick=()=>{snap();ter.fill(0);fac.fill(0);marks=[];select(null)};
+$('clear').onclick=()=>{snap();msel.clear();ter.fill(0);fac.fill(0);fog.fill(0);marks=[];select(null)};
 $('gen').onclick=()=>{snap();generate()};
-$('msize').onchange=e=>{const[w,h]=e.target.value.split('x').map(Number);snap();setDims(w,h);generate()};
-function setDims(w,h){W=w;H=h;ms=Math.max(1,W/96);cv.width=W*S;cv.height=H*S;ter=new Uint8Array(W*H);fac=new Uint8Array(W*H);marks=[];view={z:1,x:0,y:0};sel=null;meas=null;sv=null;$('sumc').hidden=true;$('info').hidden=true;$('zl').textContent='100%';$('msize').value=W+'x'+H;mkTex()}
-const lerp=(a,b,t)=>a+(b-a)*t,R=Math.random;
+$('msize').onchange=e=>{const[w,h]=e.target.value.split('x').map(Number);if(w==W&&h==H)return;snap();rescale(w,h);flash('Map resized and everything on it kept. Use 🎲 New map for fresh terrain at this size.',5000)};
+// resample the whole map to new dimensions (nearest cell), scaling every mark and keeping real-world distances
+function rescale(w,h){const oT=ter,oF=fac,oG=fog,oW=W,oH=H,M0=marks,pa=party,fx=w/oW,fy=h/oH,v=view;setDims(w,h);const src=new Int32Array(W*H);
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=Math.min(oH-1,Math.floor(y/fy))*oW+Math.min(oW-1,Math.floor(x/fx)),j=y*W+x;src[j]=i;ter[j]=oT[i];fac[j]=oF[i];fog[j]=oG[i]}
+ marks=M0.map(m=>{const q=Object.assign({},m,{x:m.x*fx,y:m.y*fy});if(m.pts)q.pts=m.pts.map(p=>[p[0]*fx,p[1]*fy]);
+  if(m.reg){const st=new Set(m.cells),c=[];for(let j=0;j<W*H;j++)if(st.has(src[j]))c.push(j);q.cells=c;if(m.r)q.r=[Math.floor(m.r[0]*fx),Math.floor(m.r[1]*fy),Math.max(1,Math.round(m.r[2]*fx)),Math.max(1,Math.round(m.r[3]*fy))]}return q}).filter(m=>!m.reg||m.cells.length);
+ if(pa)party={x:pa.x*fx,y:pa.y*fy,d:pa.d,days:pa.days,log:pa.log,trail:pa.trail.map(p=>[p[0]*fx,p[1]*fy])};sc.v=+(sc.v/fx).toPrecision(4);scUI();seed=null;$('seed').value='';ui();select(null)}
+function setDims(w,h){W=w;H=h;ms=Math.max(1,W/96);cv.width=W*S;cv.height=H*S;ter=new Uint8Array(W*H);fac=new Uint8Array(W*H);fog=new Uint8Array(W*H);party=null;marks=[];view={z:1,x:0,y:0};sel=null;meas=null;sv=null;$('sumc').hidden=true;$('info').hidden=true;$('zl').textContent='100%';$('msize').value=W+'x'+H;mkTex()}
+let rng=Math.random;const lerp=(a,b,t)=>a+(b-a)*t,R=()=>rng();
+const mb32=a=>()=>{a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 function vn(x,y,ox,oy){const xi=Math.floor(x),yi=Math.floor(y),xf=x-xi,yf=y-yi,u=xf*xf*(3-2*xf),v=yf*yf*(3-2*yf);
  return lerp(lerp(hash(xi+ox,yi+oy),hash(xi+1+ox,yi+oy),u),lerp(hash(xi+ox,yi+1+oy),hash(xi+1+ox,yi+1+oy),u),v)}
 function fbm(x,y,ox,oy,o){let s=0,a=1,t=0,f=1;for(let i=0;i<o;i++){s+=a*vn(x*f,y*f,ox+i*53,oy+i*97);t+=a;a*=.5;f*=2}return s/t}
@@ -140,7 +245,7 @@ volcanic:{b:[["Magma Sea","#e0561a"],["Basalt Plain","#3a3330"],["Ash Forest","#
 toxic:{b:[["Acid Sea","#3fae7f"],["Violet Moss","#8a5fb0"],["Glow Jungle","#2fb5a0"],["Spore Hills","#b06a9a"],["Crystal Spires","#7a6fe0"],["Ochre Barrens","#c29a4a"],["Frost Bloom","#c7e8ff"],["Spore Marsh","#6a8f3a"],["Dead Zone","#4a3a4a"]],dc:"w-thxd-sk",sea:[.4,.6],cb:[0,.15],mb:.1,wt:[.7,1]},
 barren:{b:[["Dark Maria","#3a3a44"],["Regolith","#9a9690"],["Ice Pockets","#c8dbe6"],["Highlands","#b5b0a8"],["Crater Rims","#7a7770"],["Bright Dust","#cfc9bd"],["Polar Ice","#eaf2f7"],["Rille Canyons","#5a5852"],["Impact Glass","#4a5a6a"]],dc:"-c-cmc-sk",sea:[.15,.3],cb:[-.2,.1],mb:-.45,wt:[.8,1.1]}};
 for(const k in PT){PT[k].wrap=1;PT[k].rim=0}
-const FANT={sea:[.36,.66],cb:[-.15,.2],mb:0,wt:[.72,1.22],rim:1};
+const FANT={sea:[.36,.66],cb:[-.15,.2],mb:0,wt:[.72,1.22],rim:1,rv:1};PT.terran.rv=1;PT.desert.rv=.25;
 const PFLAV=[["A vast basin of liquid; its depths are unsurveyed and its tides strange.","Open fluid expanse where survey drones lose signal beneath the surface."],["Broad, level lowlands, ideal for landing sites and sprawling settlements.","Flat plains with stable ground, easy to survey and easier to build on."],["Dense native life blankets the ground; sensors struggle to see through it.","A thick ecosystem teeming with unclassified organisms."],["Rugged upland country, rich in minerals and hard to cross.","Rolling highlands, prime sites for mining outposts and relay towers."],["Towering ranges with thin air and perfect lines of sight for observatories.","Jagged summits, hostile to vehicles, valuable to anyone who holds them."],["Barren expanses of dust and grit; scanners report little but wind.","Scoured flats where storms bury equipment within days."],["Frozen terrain with a hard crust, cold enough to crack unprotected hulls.","Pale frostfields glitter under thin sunlight; water ice runs deep."],["Unstable ground and vents where the terrain shifts and sensors fault.","Treacherous terrain, rich in resources and lethal to heavy machinery."],["A hazard zone; instruments report anomalies and settlers avoid it.","Scarred ground marked by old catastrophe; entry is strongly discouraged."]];
 const SFLAV=[["Empty void between systems; jumps here are long and lonely.","Black, quiet space with only distant starlight for company."],["A drifting gas cloud that scatters sensors and hides fleets.","Luminous nebula, beautiful and a nightmare for navigation."],["A glowing stellar nursery where new stars are being born.","Ionised gas lights the region in vivid pinks and reds."],["Dense cosmic dust that dims starlight and blinds long-range scans.","A dark lane of dust; smugglers love it and navigators hate it."],["A tumbling belt of rock rich in ore and deadly to the careless.","A debris field where miners, pirates and hideouts all collide."],["A dense cluster of stars with bright skies and crowded trade routes.","Tightly packed stars make for short jumps and plentiful systems."],["Pulsar radiation scours this region; unshielded ships won't last.","Hard radiation saturates the area, blistering electronics."],["A gravity well that warps space; travel is slow and perilous.","Space bends dangerously here around a massive hidden object."],["A raging ion storm that fries systems and scatters ships.","Roiling charged plasma drifting unpredictably across the lanes."]];
 const KFLAV=[["Open sky between the islands; skyships ride the winds and great sky-creatures drift through the deep blue.","Wide empty sky where only airships cross and every horizon hides a cloud bank."],["A bank of thick cloud, perfect cover for raiders and smugglers.","Dense cloud that swallows sound and sight; navigators curse it, smugglers love it."],["A violent storm of lightning and shear; ships turn back or break.","Roiling thunderheads, lethal to unprepared hulls."],["Green island country with terraced fields and quiet settlements on the rock.","Sheltered meadowland, the breadbasket of the floating isles."],["Ancient woodland clinging to the island, silent and watchful.","Dense canopy where the old paths are guarded and strangers are unwelcome."],["Sheer cliffs and exposed stone, a natural fortress for whoever holds it.","Wind-scoured rock shelves ringed by sheer drops and docking spurs."],["Veins of glowing skystone hum here; valuable, and dangerous to linger near.","Glittering crystal deposits that help keep the islands aloft; prospectors flock here, and not all return."]];
@@ -157,11 +262,13 @@ nomad:{b:[["Open Steppe","#c9b57a"],["Trails","#a38a5a"],["Tents & Yurts","#c985
 scrap:{b:[["Wasteland Dirt","#8a7a5a"],["Dirt Tracks","#6a5a40"],["Shacks","#8a6a4a"],["Trading Post","#d1903a"],["Barricades & Gate","#5a5f66"],["Scrapyard","#6e6a62"],["Gardens","#6a8a3a"],["Water Tanks","#3a7a9a"],["Toxic Pit","#4a5a2a"]],dc:"-pr-Wafwk",m:["🔩","⛽","🛠️","🔧","🏚️","🚧","📻","💧","🧪","🛡️","🍺","🚗","⚙️","💀"],f:[{n:"Gate Wardens",c:"#d33b3b"},{n:"Scrappers",c:"#e07a30"},{n:"Trader Cartel",c:"#d3a93b"},{n:"Outcasts",c:"#7a7a8c"}]}};
 const VO={planet:[["terran","🌍 Terran"],["desert","🏜️ Desert world"],["ice","🧊 Ice world"],["volcanic","🌋 Volcanic"],["toxic","☣️ Toxic / alien"],["barren","🌑 Barren moon"]],town:[["medieval","🏰 Medieval town"],["scifi","🏙️ Sci-fi city"],["nomad","⛺ Nomad camp"],["scrap","🔩 Scrap outpost"]]};
 const SCD={fantasy:{v:6,u:"mi"},planet:{v:50,u:"km"},space:{v:1,u:"ly"},sky:{v:2,u:"mi"},medieval:{v:2,u:"m"},scifi:{v:10,u:"m"},nomad:{v:2,u:"m"},scrap:{v:2,u:"m"}};
-MODES.town={n:'🏘️ Settlement',ic:'🏘️',m:[],t:SETFLAV,f:[]};
+MODES.town={n:'🏘️ Settlement',ic:'🏘️',m:[],t:SETFLAV,f:[]};MODES.fantasy.ripple=MODES.planet.ripple=1;
 function scUI(){$('scv').value=sc.v;$('scu').value=sc.u;gtxt()}
 function gtxt(){$('gtxt').textContent='= '+(+(gsz*sc.v).toPrecision(3))+' '+sc.u}
 $('scv').oninput=e=>{sc.v=+e.target.value>0?+e.target.value:1;gtxt();draw()};$('scu').oninput=e=>{sc.u=e.target.value;gtxt();draw()};$('gsz').oninput=e=>{gsz=Math.max(1,Math.round(+e.target.value)||5);gtxt();draw()};
-function drawMeas(){const a=meas.a,b=meas.b,d=Math.hypot(b[0]-a[0],b[1]-a[1])/S*sc.v;ctx.setLineDash([6,5]);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffd24a';for(const p of[a,b]){ctx.beginPath();ctx.arc(p[0],p[1],4*ms,0,7);ctx.fill()}ctx.textAlign='center';ctx.textBaseline='middle';text((d<10?d.toFixed(1):Math.round(d))+' '+sc.u,(a[0]+b[0])/2,(a[1]+b[1])/2-12*ms,15*ms,'#ffd24a')}
+function measTot(){return(meas.legs||[]).concat([[meas.a,meas.b]]).reduce((t,[a,b])=>t+Math.hypot(b[0]-a[0],b[1]-a[1]),0)/S*sc.v}
+function drawMeas(){for(const[a,b]of meas.legs||[]){ctx.setLineDash([6,5]);ctx.strokeStyle='rgba(255,210,74,.75)';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(a[0],a[1],4*ms,0,7);ctx.fill()}
+ const a=meas.a,b=meas.b,d=(meas.legs&&meas.legs.length)?measTot():Math.hypot(b[0]-a[0],b[1]-a[1])/S*sc.v;ctx.setLineDash([6,5]);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffd24a';for(const p of[a,b]){ctx.beginPath();ctx.arc(p[0],p[1],4*ms,0,7);ctx.fill()}ctx.textAlign='center';ctx.textBaseline='middle';text((d<10?d.toFixed(1):Math.round(d))+' '+sc.u,(a[0]+b[0])/2,(a[1]+b[1])/2-12*ms,15*ms,'#ffd24a')}
 function flood(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return;const t=ter[cy*W+cx];if(t==biome)return;const st=[cy*W+cx];while(st.length){const i=st.pop();if(ter[i]!=t)continue;ter[i]=biome;const x=i%W,y=i/W|0;if(x>0)st.push(i-1);if(x<W-1)st.push(i+1);if(y>0)st.push(i-W);if(y<H-1)st.push(i+W)}}
 function genTown(st){
  const put=(x,y,v,z)=>{x=Math.round(x);y=Math.round(y);if(x>=0&&y>=0&&x<W&&y<H&&(!z||ter[y*W+x]==0))ter[y*W+x]=v},
@@ -216,20 +323,20 @@ const RS=new WeakMap();function rset(m){let t=RS.get(m);if(!t){t=new Set(m.cells
 const SAN=[0,0,["Habitat Spire","Skyline Block","Lumen Court","Arcology","Haven Deck"],["Neon Exchange","Commerce Row","The Concourse","Trade Spine"],["Command Spire","Security Hub","Defense Grid"],["Fabrication Row","Reactor Works","Assembly Line","Cargo Yards"],["Hydroponic Gardens","Sky Park","Bio-Dome","Green Deck"],["Coolant Reach","Canal Run"],["The Undercity","Sump Levels","Lowtown","Rust Warrens"]];
 const AN=[0,0,["Old Quarter","Lanternside","Weavers' Row","Rookery","Highgate","Mill End","Crossing","Hearthside"],["Grand Market","Bazaar","Exchange","Traders' Circle","Fair Green"],["Citadel","Bastion","Command Ring","Wardens' Hold","Watch Walls"],["Forge Row","Foundry Quarter","The Works","Smiths' Yard","Tannery Row"],["Farmsteads","Green Terraces","Common Fields","Herd Meadow","Garden Ring"],["The Waterway","Canal Reach","Waterfront","Water Run"],["Shantytown","Undercroft","The Rot","Burnt Quarter","Ash Row"]];
 function mkReg(cells,b,n,d){let sx=0,sy=0;for(const j of cells){sx+=j%W;sy+=j/W|0}sx/=cells.length;sy/=cells.length;let best=cells[0],bd=1e9;for(const j of cells){const dd=Math.hypot(j%W-sx,(j/W|0)-sy);if(dd<bd){bd=dd;best=j}}return{reg:1,cells,b,n,d,i:'',l:false,x:(best%W+.5)*S,y:((best/W|0)+.5)*S}}
-function hitReg(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return -1;const ci=cy*W+cx;let b=-1,bs=1e9;marks.forEach((m,i)=>{if(m.reg&&m.cells.length<bs&&rset(m).has(ci)){bs=m.cells.length;b=i}});return b}
+function hitReg(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return -1;const ci=cy*W+cx;let b=-1,bs=1e9;marks.forEach((m,i)=>{if(m.reg&&!hidP(m)&&m.cells.length<bs&&rset(m).has(ci)){bs=m.cells.length;b=i}});return b}
 function defRegion(x,y){const cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H)return;const h=hitReg(x,y);if(h>=0){select(h);return}
  const b=ter[cy*W+cx],cells=[],seen=new Uint8Array(W*H),st=[cy*W+cx];seen[st[0]]=1;
  while(st.length&&cells.length<6000){const j=st.pop();cells.push(j);const px=j%W,py=j/W|0;for(const q of[px>0?j-1:-1,px<W-1?j+1:-1,py>0?j-W:-1,py<H-1?j+W:-1])if(q>=0&&!seen[q]&&ter[q]==b){seen[q]=1;st.push(q)}}
  const nm=$('name').value.trim();$('name').value='';marks.push(mkReg(cells,b,nm||BIOMES[b][0],''));select(marks.length-1)}
-function regText(m){const st=rset(m),inn=marks.filter(p=>!p.pts&&!p.reg&&!p.l&&p.n&&st.has(Math.min(H-1,p.y/S|0)*W+Math.min(W-1,p.x/S|0))).map(p=>p.i+' '+p.n);return `${(BIOMES[m.b]||['Area'])[0]} ${m.bld?'building':'district'}, ${m.cells.length} cells (about ${Math.round(m.cells.length*sc.v*sc.v)} ${sc.u}²).`+mixText(m)+(inn.length?` Contains: ${inn.join(', ')}.`:'')+' '}
+function regText(m){const st=rset(m),inn=marks.filter(p=>!p.pts&&!p.reg&&!p.l&&p.n&&!hidP(p)&&st.has(Math.min(H-1,p.y/S|0)*W+Math.min(W-1,p.x/S|0))).map(p=>p.i+' '+p.n);return `${(BIOMES[m.b]||['Area'])[0]} ${m.bld?'building':'district'}, ${m.cells.length} cells (about ${Math.round(m.cells.length*sc.v*sc.v)} ${sc.u}²).`+mixText(m)+(inn.length?` Contains: ${inn.join(', ')}.`:'')+' '}
 function drawReg(m,hl){if(m.bld&&m.r){const r=m.r;ctx.setLineDash([]);ctx.fillStyle='rgba(255,255,255,.14)';ctx.fillRect(r[0]*S,r[1]*S,r[2]*S,r[3]*S);ctx.strokeStyle='rgba(255,255,255,.8)';ctx.lineWidth=1.5*ms;ctx.strokeRect(r[0]*S,r[1]*S,r[2]*S,r[3]*S)}
  if(hl){const st=rset(m);ctx.fillStyle='rgba(255,210,74,.28)';for(const j of m.cells)ctx.fillRect((j%W)*S,(j/W|0)*S,S,S);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2*ms;ctx.setLineDash([]);ctx.beginPath();
   for(const j of m.cells){const cx=j%W,cy=j/W|0,x=cx*S,y=cy*S;if(cx==0||!st.has(j-1)){ctx.moveTo(x,y);ctx.lineTo(x,y+S)}if(cx==W-1||!st.has(j+1)){ctx.moveTo(x+S,y);ctx.lineTo(x+S,y+S)}if(cy==0||!st.has(j-W)){ctx.moveTo(x,y);ctx.lineTo(x+S,y)}if(cy==H-1||!st.has(j+W)){ctx.moveTo(x,y+S);ctx.lineTo(x+S,y+S)}}ctx.stroke()}
- if(vis.n&&m.n&&(!M.lod||view.z>=1.6))lbl(m.n,m.x,m.y,(m.bld?11:14)*ms,'#ffe9a8',{it:1,pr:m.bld?6:4,kind:'reg'})}
+ if(vis.n&&m.n&&(!M.lod||view.z>=1.6)&&!(hidP(m)))lbl(m.n,m.x,m.y,(m.bld?11:14)*ms,'#ffe9a8',{it:1,pr:m.bld?6:4,kind:'reg'})}
 function split(cells,n){const px=j=>[j%W,j/W|0],sd=[cells[Math.floor(R()*cells.length)]];
  while(sd.length<n){let bj=0,bd=-1;for(let t=0;t<Math.min(cells.length,500);t++){const j=cells[Math.floor(R()*cells.length)],a=px(j);let md=1e9;for(const q of sd){const c=px(q);md=Math.min(md,Math.hypot(a[0]-c[0],a[1]-c[1]))}if(md>bd){bd=md;bj=j}}sd.push(bj)}
  const g=sd.map(()=>[]);for(const j of cells){const a=px(j);let bi=0,bd=1e9;sd.forEach((q,k)=>{const c=px(q),d=Math.hypot(a[0]-c[0],a[1]-c[1]);if(d<bd){bd=d;bi=k}});g[bi].push(j)}return g.filter(a=>a.length>=8)}
-function autoDistricts(){if(mode!='town')return;snap();marks=marks.filter(m=>!m.reg);const seen=new Uint8Array(W*H),used={};
+function autoDistricts(ns){if(mode!='town')return;if(!ns)snap();marks=marks.filter(m=>!m.reg);const seen=new Uint8Array(W*H),used={};
  for(let i=0;i<W*H;i++){const b=ter[i];if(seen[i]||b<2)continue;const cells=[],st=[i];seen[i]=1;
   while(st.length){const j=st.pop();cells.push(j);const x=j%W,y=j/W|0;for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const q=yy*W+xx;if(!seen[q]&&ter[q]==b){seen[q]=1;st.push(q)}}}
   if(cells.length<(b==2?30:10))continue;
@@ -237,29 +344,70 @@ function autoDistricts(){if(mode!='town')return;snap();marks=marks.filter(m=>!m.
  select(null)}
 $('autod').onclick=()=>{autoDistricts();flash('Districts detected: '+marks.filter(m=>m.reg).length+'. Click one to edit it.')};
 $('leg').onclick=e=>{legend=!legend;e.currentTarget.classList.toggle('on',legend);draw()};
-function drawLegend(){const k=ms,cnt=new Array(BIOMES.length).fill(0);for(const v of ter)cnt[v]++;const rows=[];
+function drawLegend(){const k=ms*hd,cnt=new Array(BIOMES.length).fill(0);for(const v of ter)cnt[v]++;const rows=[];
  BIOMES.forEach((b,i)=>{if(cnt[i])rows.push([b[1],b[0],0])});
  const fu=new Set(fac);facs.forEach((f,i)=>{if(fu.has(i+1))rows.push([f.c,f.n,1])});
  new Set(marks.filter(m=>m.pts).map(m=>m.t)).forEach(t=>{const T=pp()[t];if(T)rows.push([T.c,T.n,2])});
- ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);const pad=8*k,rh=16*k,w=172*k,h=pad*2+(rows.length+2.4)*rh,x0=10*k,y0=cv.height-h-10*k;
+ {const ic={};for(const m of marks)if(!m.pts&&!m.reg&&!m.l&&m.i&&!hidP(m))(ic[m.i]=ic[m.i]||[]).push(m.n);Object.entries(ic).sort((a,b)=>b[1].length-a[1].length).slice(0,8).forEach(([i,n])=>rows.push(['',`×${n.length}${n.find(Boolean)?' (e.g. '+n.find(Boolean).slice(0,20)+')':''}`,3,i]))}
+ ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);ctx.font=`${11*k}px Georgia,serif`;const pad=8*k,rh=16*k,w=Math.min(cv.width*.45,Math.max(172*k,...rows.map(r=>ctx.measureText(r[1]).width+pad*2+22*k))),h=pad*2+(rows.length+2.4)*rh,x0=10*k,y0=cv.height-h-10*k;
  ctx.fillStyle='rgba(20,17,12,.85)';ctx.strokeStyle='rgba(255,255,255,.35)';ctx.lineWidth=1;ctx.beginPath();ctx.rect(x0,y0,w,h);ctx.fill();ctx.stroke();
  ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillStyle='#ffe9a8';ctx.font=`bold ${12*k}px Georgia,serif`;ctx.fillText((maps.find(m=>m.id==cur)||{}).name||'Map',x0+pad,y0+pad+rh/2);ctx.font=`${11*k}px Georgia,serif`;
  rows.forEach((r,i)=>{const y=y0+pad+(i+1.4)*rh+rh/2;ctx.fillStyle=r[0];ctx.strokeStyle=r[0];
-  if(r[2]==2){ctx.lineWidth=3*k;ctx.beginPath();ctx.moveTo(x0+pad,y);ctx.lineTo(x0+pad+12*k,y);ctx.stroke()}else{ctx.fillRect(x0+pad,y-5*k,12*k,10*k);if(r[2]){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(x0+pad,y-5*k,12*k,10*k)}}
+  if(r[2]==3){ctx.font=`${12*k}px serif`;ctx.textAlign='center';ctx.fillText(r[3],x0+pad+6*k,y+1*k);ctx.textAlign='left';ctx.font=`${11*k}px Georgia,serif`}else if(r[2]==2){ctx.lineWidth=3*k;ctx.beginPath();ctx.moveTo(x0+pad,y);ctx.lineTo(x0+pad+12*k,y);ctx.stroke()}else{ctx.fillRect(x0+pad,y-5*k,12*k,10*k);if(r[2]){ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.strokeRect(x0+pad,y-5*k,12*k,10*k)}}
   ctx.fillStyle='#fff';ctx.fillText(r[1],x0+pad+18*k,y)});
  let L=1;for(const n of[1,2,5,10,20,50,100,200,500,1000,2000,5000])if(n*S*view.z<=w-2*pad)L=n;
  const y=y0+h-pad-rh/2,bw=L*S*view.z;ctx.strokeStyle='#fff';ctx.lineWidth=2*k;ctx.beginPath();ctx.moveTo(x0+pad,y+4*k);ctx.lineTo(x0+pad,y-2*k);ctx.lineTo(x0+pad+bw,y-2*k);ctx.lineTo(x0+pad+bw,y+4*k);ctx.stroke();ctx.fillStyle='#fff';ctx.fillText(+(L*sc.v).toPrecision(3)+' '+sc.u,x0+pad+bw+6*k,y)}
 const REL=['Neutral','Allied','Friendly','Rival','At war'];
-function openFac(i){fi=i;const f=facs[i];if(!f)return;$('fbox').innerHTML=`<div class="ihead"><span class="sw" style="background:${f.c};width:20px;height:20px"></span><b style="flex:1;font-size:16px">${esc(f.n)}</b><button data-fa="1">✕</button></div><textarea id="fdesc" rows="4" placeholder="Goals, history, leadership, what they want…">${esc(f.d||'')}</textarea><h2>Relations</h2>`+(facs.length<2?'<i>Add more factions to set relations.</i>':facs.map((o,j)=>j==i?'':`<div class="frow"><span style="flex:1;align-self:center">${esc(o.n)}</span><select data-fr="${j}">${REL.map(r=>`<option${((f.rel||{})[j]||'Neutral')==r?' selected':''}>${r}</option>`).join('')}</select></div>`).join(''));$('fmodal').hidden=false}
-$('fmodal').onclick=e=>{if(e.target.id=='fmodal'||e.target.closest('[data-fa]'))$('fmodal').hidden=true};
+function openFac(i){fi=i;const f=facs[i];if(!f)return;$('fbox').innerHTML=`<div class="ihead"><span class="sw" style="background:${f.c};width:20px;height:20px"></span><b style="flex:1;font-size:16px">${esc(f.n)}</b><button data-fa="1">✕</button></div>${facStats(i)}<textarea id="fdesc" rows="4" placeholder="Goals, history, leadership, what they want…">${esc(f.d||'')}</textarea><h2>Relations</h2>`+(facs.length<2?'<i>Add more factions to set relations.</i>':facs.map((o,j)=>j==i?'':`<div class="frow"><span style="flex:1;align-self:center">${esc(o.n)}</span><select data-fr="${j}">${REL.map(r=>`<option${((f.rel||{})[j]||'Neutral')==r?' selected':''}>${r}</option>`).join('')}</select></div>`).join(''))+`<div class="bar" style="margin-top:10px"><button data-fdel="1">🗑️ Delete faction</button></div>`;$('fmodal').hidden=false}
+function facStats(i){let n=0;for(const v of fac)if(v==i+1)n++;if(!n)return '<div style="font-size:12px;opacity:.75;margin-bottom:6px">No territory yet. Paint some with 🚩 Paint faction.</div>';
+ const at=m=>fac[Math.min(H-1,Math.max(0,m.y/S|0))*W+Math.min(W-1,Math.max(0,m.x/S|0))]==i+1,P=marks.filter(m=>!m.pts&&!m.reg&&!m.l&&m.n&&at(m)),rk=facs.map((_,j)=>{let c=0;for(const v of fac)if(v==j+1)c++;return c}).filter(c=>c>n).length+1;
+ return `<div style="font-size:12px;margin-bottom:6px;line-height:1.5">🗺️ ${n} cells, ${Math.round(n/(W*H)*100)}% of the map (about ${Math.round(n*sc.v*sc.v).toLocaleString()} ${esc(sc.u)}²), ranked #${rk} by size.<br>📍 ${P.length?`${P.length} named place${P.length>1?'s':''}: ${P.slice(0,10).map(m=>esc(m.i+' '+m.n)).join(', ')}${P.length>10?', …':''}`:'No named places in its territory.'}</div>`}
+function delFac(i){snap();const n=i+1;for(let j=0;j<fac.length;j++){if(fac[j]==n)fac[j]=0;else if(fac[j]>n)fac[j]--}
+ facs.splice(i,1);for(const f of facs){if(!f.rel)continue;const r={};for(const k in f.rel){if(+k<i)r[k]=f.rel[k];else if(+k>i)r[k-1]=f.rel[k]}f.rel=r}
+ fsel=Math.min(fsel,facs.length)||1;$('fmodal').hidden=true;ui();draw();flash('Faction deleted. Undo brings it back.')}
+$('fmodal').addEventListener('input',e=>{if(e.target.id=='gq')gazList(e.target.value)});
+$('fmodal').onclick=e=>{const gz=e.target.closest('[data-gz]');if(gz){$('fmodal').hidden=true;focusMark(+gz.dataset.gz);return}const gmb=e.target.closest('[data-gm]');if(gmb){const[id,i]=gmb.dataset.gm.split('|');$('fmodal').hidden=true;openMap(id,true);focusMark(+i);return}const d=e.target.closest('[data-fdel]');if(d){if(!d.dataset.ok){d.dataset.ok=1;d.textContent='Click again to delete (territory is cleared)';return}delFac(fi);return}
+ if(e.target.id=='fmodal'||e.target.closest('[data-fa]'))$('fmodal').hidden=true};
 $('fmodal').addEventListener('input',e=>{const f=facs[fi];if(!f)return;if(e.target.id=='fdesc')f.d=e.target.value;else if(e.target.dataset.fr!==undefined){const j=+e.target.dataset.fr;(f.rel=f.rel||{})[j]=e.target.value;const o=facs[j];(o.rel=o.rel||{})[fi]=e.target.value}touch()});
 function finishBld(){const q=bd;bd=null;const cl=(v,mx)=>Math.max(0,Math.min(mx,(v/S)|0)),x0=cl(Math.min(q.a[0],q.b[0]),W-1),x1=cl(Math.max(q.a[0],q.b[0]),W-1),y0=cl(Math.min(q.a[1],q.b[1]),H-1),y1=cl(Math.max(q.a[1],q.b[1]),H-1),cells=[];
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)cells.push(y*W+x);if(cells.length>2500){flash('Too large for a building. Use the District tool.');draw();return}
  const nm=$('name').value.trim();$('name').value='';const m=mkReg(cells,ter[((y0+y1)>>1)*W+((x0+x1)>>1)],nm||'Building','');m.bld=1;m.i='🏠';m.r=[x0,y0,x1-x0+1,y1-y0+1];marks.push(m);select(marks.length-1)}
 function drawBd(){const q=bd,x0=Math.min(q.a[0],q.b[0]),y0=Math.min(q.a[1],q.b[1]),w=Math.abs(q.a[0]-q.b[0]),h=Math.abs(q.a[1]-q.b[1]),sx=Math.floor(x0/S)*S,sy=Math.floor(y0/S)*S;ctx.setLineDash([5,4]);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.strokeRect(sx,sy,Math.ceil((x0+w)/S)*S-sx,Math.ceil((y0+h)/S)*S-sy);ctx.setLineDash([])}
-$('find').onfocus=()=>{$('finds').innerHTML=[...new Set(marks.filter(m=>m.n).map(m=>m.n))].map(n=>`<option value="${esc(n)}">`).join('')};
-$('find').onchange=e=>{const q=e.target.value.trim().toLowerCase();if(!q)return;let i=marks.findIndex(m=>(m.n||'').toLowerCase()==q);if(i<0)i=marks.findIndex(m=>(m.n||'').toLowerCase().includes(q));if(i<0)return flash('Nothing named "'+e.target.value+'" on this map');
- const m=marks[i];view.z=Math.max(view.z,2.5);view.x=cv.width/2-m.x*view.z;view.y=cv.height/2-m.y*view.z;clampView();$('zl').textContent=Math.round(view.z*100)+'%';select(i)};
+$('find').onfocus=()=>{$('finds').innerHTML=[...new Set(marks.filter(m=>m.n&&!hidP(m)).map(m=>m.n))].map(n=>`<option value="${esc(n)}">`).join('')};
+$('find').onchange=e=>{const q=e.target.value.trim().toLowerCase();if(!q)return;let i=marks.findIndex(m=>!hidP(m)&&(m.n||'').toLowerCase()==q);if(i<0)i=marks.findIndex(m=>!hidP(m)&&(m.n||'').toLowerCase().includes(q));if(i<0)return flash('Nothing named "'+e.target.value+'" on this map');
+ focusMark(i)};
+function focusMark(i){const m=marks[i];if(!m)return;view.z=Math.max(view.z,2.5);view.x=cv.width/2-m.x*view.z;view.y=cv.height/2-m.y*view.z;clampView();$('zl').textContent=Math.round(view.z*100)+'%';select(i)}
+const ico=m=>m.pts?'〰️':m.reg?(m.i||'🏷️'):m.l?'🔤':m.i;
+function openGaz(){$('fbox').innerHTML=`<div class="ihead"><b style="flex:1;font-size:16px">📖 Gazetteer</b><button data-fa="1">✕</button></div><input type="text" id="gq" placeholder="🔎 Filter by name or description…" style="margin-bottom:4px"><div id="gl"></div>`;gazList('');$('fmodal').hidden=false;$('gq').focus()}
+function gazList(q){q=q.trim().toLowerCase();const G=[['📍 Landmarks',m=>!m.pts&&!m.reg&&!m.l],['🏷️ Districts & buildings',m=>m.reg],['〰️ Paths',m=>m.pts],['🔤 Labels',m=>m.l]];let h='';
+ for(const[t,f]of G){const L=marks.map((m,i)=>[m,i]).filter(([m])=>f(m)&&m.n&&!(hidP(m))&&(!q||m.n.toLowerCase().includes(q)||(m.d||'').toLowerCase().includes(q))).sort((a,b)=>a[0].n.localeCompare(b[0].n));if(!L.length)continue;
+  h+=`<h2>${t} (${L.length})</h2>`+L.map(([m,i])=>`<button data-gz="${i}" style="width:100%;margin-bottom:3px" title="${esc((m.d||'').slice(0,200))}"><span>${ico(m)}</span><span style="flex:1">${esc(m.n)}</span>${m.link?'<span title="Links to another map">↗</span>':''}${m.d?'<span style="opacity:.55;font-size:11px">📝</span>':''}</button>`).join('')}
+ if(q&&maps.length>1){stash();const O=[];for(const mp of maps){if(mp.id==cur||!mp.d||!mp.d.m)continue;mp.d.m.forEach((m,i)=>{if(m.n&&!(vis.y&&m.gm)&&(m.n.toLowerCase().includes(q)||(m.d||'').toLowerCase().includes(q)))O.push([mp,m,i])})}
+  if(O.length)h+=`<h2>🗺️ On other maps (${O.length})</h2>`+O.slice(0,60).map(([mp,m,i])=>`<button data-gm="${mp.id}|${i}" style="width:100%;margin-bottom:3px"><span>${ico(m)}</span><span style="flex:1">${esc(m.n)}</span><span style="opacity:.6;font-size:11px">${esc(mp.name)}</span></button>`).join('')}
+ $('gl').innerHTML=h||(q?'<i>Nothing matches.</i>':'<i>No named places yet. Try ✨ Populate, or name your pins.</i>')}
+$('gaz').onclick=openGaz;
+const ENC={fantasy:[["a pod of whales surfaces beside a drifting wreck","pirates flying false colours give chase","a sudden squall tears at the sails","merfolk demand a toll of song or silver"],["a merchant caravan with a broken axle begs for help","a farmer swears wolves took three sheep last night","a patrol of riders demands to see papers","a travelling fair has set up at the crossroads"],["elven hunters watch silently from the trees","a giant spider has strung webs across the path","a lost child claims to live in a cottage nobody can find","bandits have felled a tree to block the road"],["an ogre demands a toll at a narrow bridge","a shepherd reports strange lights over the barrow","a rockslide has uncovered an old tomb entrance","goblin scouts shadow the party along the ridges"],["a griffon circles overhead, eyeing the pack animals","a blizzard forces shelter in a cave that is already occupied","dwarven prospectors offer a shortcut through their mine","an avalanche cuts off the pass behind you"],["the mirage of a city shimmers on the horizon","a sandstorm rolls in from the west","nomads offer water in exchange for news","a giant scorpion bursts from the dunes"],["frost wolves howl as the light fails","a frozen traveller still clutches a sealed letter","the ice cracks underfoot over black water","huge tracks lead toward a smoking cave"],["will-o'-wisps try to lure you off the path","a marsh hag offers a cure in exchange for a memory","a sunken shrine rises at low water","leeches and fever plague the camp"],["undead soldiers still guard a burned outpost","the air tastes of ash and old magic","scavengers pick at the bones of a great beast","a cursed relic hums in the dust"],["a herd of wild horses thunders past","horse-lords challenge you to a race","a grass fire races before the wind","a lone standing stone bears fresh offerings"]],
+ sci:["a distress beacon pings on an old frequency","a patrol cutter demands to inspect your cargo","sensor ghosts shadow your course","salvagers stripping a wreck do not want company","a hull breach alarm sounds at the worst moment","a smuggler offers a deal too good to be true","local wildlife has nested in the landing gear","a corporate survey team insists this site is theirs"],
+ sky:["a sky-whale drifts close enough to touch","raiders dive out of the cloud bank","a storm front forces an emergency landing","a skystone shard drags the compass off true","a stranded balloonist waves for help","a flock of razor-winged gulls swarms the rigging"],
+ medieval:["a pickpocket bumps into you in the crowd","a town crier announces a reward","a brawl spills out of a tavern","a noble's carriage forces everyone off the street","a street preacher warns of coming doom","the watch is searching every cart for a fugitive"],
+ nomad:["a herd stampedes through camp","the elders summon you to the council fire","a rival clan rides in under a white flag","a shaman reads a dark omen in the smoke","a prized horse goes missing overnight"],
+ scrap:["raiders test the gate at dusk","a water ration dispute turns violent","a scavenger finds working old-world tech","a toxic storm forces everyone indoors","a trader's cart is rigged to explode"]};
+function encounter(m){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),b=ter[cy*W+cx];
+ const L=mode=='fantasy'?ENC.fantasy[b]||ENC.fantasy[1]:mode=='sky'?ENC.sky:mode=='town'?(ENC[ptype]||ENC.sci):ENC.sci;
+ const when=PK(mode=='space'?['On approach','Mid-jump','During a refuelling stop','On the long drift out']:['At dawn','At dusk','Around midday','In the dead of night','In driving rain','Under a heavy fog']);return `🎲 Encounter: ${when}, ${PK(L)}.`}
+const ROLE={'🍺':'innkeeper','🏰':'castellan','⚓':'harbourmaster','⛪':'priest','⚒️':'smith','🛡️':'watch captain','🏛️':'guildmaster','🏘️':'village elder','🏙️':'magistrate','🌲':'hermit','🏚️':'squatter','🕳️':'guide','🗼':'keeper of the tower','🔬':'lead researcher','🚀':'dockmaster','🏭':'shift boss','⛏️':'mine foreman','🛰️':'station chief','🏪':'trader','⛺':'chieftain','🔥':'storyteller','🐎':'horse-master','🔩':'scrapper','⛽':'fuel boss','🏥':'healer','🌾':'miller','💧':'water warden','📡':'signals officer'},
+ TRAIT=['speaks only in whispers','laughs too loudly at their own jokes','never forgets a face','is missing two fingers and won’t say how','collects small carved birds','is fiercely loyal to an old friend','lies when nervous','quotes scripture or regulations constantly','is far older than they look','hums tunelessly while working','distrusts anyone with clean boots','owes everyone a little money'],
+ WANT=['wants to leave this place forever','is hiding a sibling who deserted the army','is secretly paid by {F} to report on visitors','wants revenge on a rival across the river','needs a rare medicine for a sick child','dreams of finding the treasure in an old family story','wants the party to carry a sealed letter, no questions asked','is planning to sell the place and vanish','is looking for a trustworthy apprentice','fears something that comes out at night'];
+function npc(m){const sci=mode=='planet'||mode=='space'||(mode=='town'&&ptype=='scifi'),nm=sci?sname().split(' ')[0]+' '+PK(['Vance','Okoro','Reyes','Ishikawa','Kade','Lindqvist','Osei','Marr']):PK(NPC.concat(['Brannoc','Ysolde','Merrit','Odile','Fenwick','Sabine','Corwin','Hedda','Lio','Tamsin']))+' '+PK(TIT),
+ cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),fo=fac[cy*W+cx]&&facs[fac[cy*W+cx]-1],role=ROLE[m.i]||PK(sci?['technician','fixer','pilot','medic','broker']:['farmer','trader','retired soldier','wandering scholar','ferry-keeper']);
+ return `👤 ${nm}, the ${role}, ${PK(TRAIT)} and ${PK(WANT).replace('{F}',fo?fo.n:'a rival power')}.`}
+const WX={fantasy:[['Calm seas under a bright sky.','A squall rolls in; waves break white over the bows.','Thick sea fog; bells and horns everywhere.'],['Warm and breezy; the grass ripples like water.','Steady rain turns the roads to mud.','A thunderstorm builds by late afternoon.'],['Dappled sunlight and birdsong.','Drizzle drips from the canopy all day.','Mist pools between the trunks until noon.'],['Wind whistles over the ridges.','Low cloud hides the hilltops.','Clear and cold; you can see for miles.'],['Biting wind and thin, bright air.','A blizzard closes the pass.','Rockfall echoes after a night of hard frost.'],['Blazing heat; shimmering mirages.','A sandstorm darkens the sky.','A rare, brief downpour fills the dry gullies.'],['Snow falls softly without end.','A whiteout: you cannot see your own hand.','Clear and bitterly cold; the snow squeaks underfoot.'],['Humid and buzzing with insects.','Fog lies thick on the water.','Warm rain hisses on the reeds.'],['Ash drifts like grey snow.','A dry, choking wind.','Strange lights flicker on the horizon.'],['Endless blue sky and a steady wind.','A grass fire smokes on the horizon.','A line of storms marches across the plain.']],
+ sci:['Clear conditions; sensors nominal.','Solar flare warning: comms crackle all day.','Dust storm; visibility under ten metres.','Acid drizzle; seals and suits need checking.','Electrical storm; landing traffic grounded.'],sky:['Fair winds and puffy cumulus.','A rising gale; ships reef their sails.','Lightning dances inside the storm bank.','Becalmed: not a breath of wind all day.']};
+function weather(m){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),b=ter[cy*W+cx],t=mode=='fantasy'?PK(WX.fantasy[b]||WX.fantasy[1]):mode=='sky'?PK(WX.sky):mode=='town'&&ptype!='scifi'?PK(WX.fantasy[1]):PK(WX.sci);return `🌦️ Weather: ${t}`}
+$('icopy').onclick=async()=>{const m=marks[sel];if(!m)return;const t=`${ico(m)} ${m.n||'Unnamed'}`+(m.d?'\n'+m.d:'')+'\n_'+$('iland').textContent+'_';let ok=0;try{await navigator.clipboard.writeText(t);ok=1}catch(e){}if(!ok){const ta=document.createElement('textarea');ta.value=t;root.appendChild(ta);ta.select();try{ok=document.execCommand('copy')}catch(e){}ta.remove()}flash(ok?'📋 Copied to the clipboard.':'Could not copy here. Select the description text and copy it by hand.',2500)};
+$('inpc').onclick=()=>{const m=marks[sel];if(!m)return;snap();m.d=(m.d?m.d.trim()+'\n\n':'')+npc(m);$('idesc').value=m.d;touch()};
+$('iwx').onclick=()=>{const m=marks[sel];if(!m)return;flash(weather(m),7000)};
+$('ienc').onclick=()=>{const m=marks[sel];if(!m)return;snap();m.d=(m.d?m.d.trim()+'\n\n':'')+encounter(m);$('idesc').value=m.d;touch()};
 let tex=null;
 function mkTex(){tex=document.createElement('canvas');tex.width=W;tex.height=H;const g=tex.getContext('2d'),im=g.createImageData(W,H),o1=Math.floor(R()*1000),o2=Math.floor(R()*1000);
  for(let y=0;y<H;y++)for(let x=0;x<W;x++){const v=fbm(x*.11,y*.11,o1,o2,3),k=(y*W+x)*4;im.data[k]=im.data[k+1]=im.data[k+2]=v>.5?255:0;im.data[k+3]=Math.min(62,Math.abs(v-.5)*300)}
@@ -270,6 +418,8 @@ function drawSmooth(x0,x1,y0,y1){
  ctx.fillStyle=BIOMES[0][1];ctx.fillRect(x0*S,y0*S,(x1-x0)*S,(y1-y0)*S);
  const L=Array.from({length:nb},()=>[]);
  for(let y=py0;y<py1;y++)for(let x=px0;x<px1;x++){const b=ter[y*W+x];if(b)L[b].push(x,y)}
+ if(M.ripple){const ring=(r,c)=>{ctx.fillStyle=c;ctx.beginPath();for(let b=1;b<nb;b++){const l=L[b];for(let i=0;i<l.length;i+=2){const cx=(l[i]+.5)*S,cy=(l[i+1]+.5)*S;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}}ctx.fill()};
+  ring(S*.72+16,'rgba(255,255,255,.08)');ring(S*.72+12,BIOMES[0][1]);ring(S*.72+9,'rgba(255,255,255,.07)');ring(S*.72+6,BIOMES[0][1])}
  if(M.halo){ctx.fillStyle=M.halo.c;ctx.beginPath();for(let b=M.halo.min;b<nb;b++){const l=L[b];for(let i=0;i<l.length;i+=2){const cx=(l[i]+.5)*S,cy=(l[i+1]+.5)*S,r=S*.72+3;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}}ctx.fill()}
  const order=town?[7,6,8,3,1,5,2,4]:Array.from({length:nb-1},(_,i)=>i+1);
  for(const b of order){const l=L[b];if(!l||!l.length)continue;ctx.fillStyle=BIOMES[b][1];ctx.beginPath();
@@ -280,15 +430,17 @@ function drawSmooth(x0,x1,y0,y1){
   ctx.fill();
   if(!town)for(const[a,al,t]of[[.7,.07,'255,255,255'],[.86,.07,'0,0,0']]){ctx.fillStyle=`rgba(${t},${al})`;ctx.beginPath();for(let i=0;i<l.length;i+=2){const x=l[i],y=l[i+1];if(hash(x*3+7,y*5+1)>a){const cx=(x+.5+(hash(x,y*2)-.5)*.4)*S,cy=(y+.5+(hash(y,x*2)-.5)*.4)*S,r=S*.62;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}}ctx.fill()}}
  if(!town&&tex){ctx.imageSmoothingEnabled=true;ctx.drawImage(tex,0,0,W*S,H*S);const w=W*S,h=H*S,gr=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.max(w,h)*.75);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,.2)');ctx.fillStyle=gr;ctx.fillRect(0,0,w,h)}}
-function hover(e){const t=$('tip');if(tool!='pan'&&tool!='remove'){t.hidden=true;return}const[x,y]=pos(e);let h=hit(x,y);if(h<0)h=hitReg(x,y);const m=marks[h];if(!m||(!m.n&&!m.d)){t.hidden=true;return}
+function hover(e){const t=$('tip');if(tool!='pan'&&tool!='remove'){t.hidden=true;return}const[x,y]=pos(e);let h=hit(x,y);if(h<0)h=hitReg(x,y);const m=marks[h];if(!m||(!m.n&&!m.d)||(hidP(m))){t.hidden=true;return}
  t.textContent=(m.pts?'〰️':m.reg?(m.i||'🏷️'):m.l?'🔤':m.i)+' '+(m.n||'Unnamed')+(m.d?'\n'+m.d.slice(0,160)+(m.d.length>160?'…':''):'');t.style.left=e.clientX+14+'px';t.style.top=e.clientY+14+'px';t.hidden=false}
-function drawFrame(){const k=ms,w=cv.width,h=cv.height;ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);
+function drawFrame(){const k=ms*hd,w=cv.width,h=cv.height;ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);
  ctx.strokeStyle='rgba(232,217,168,.95)';ctx.lineWidth=4*k;ctx.strokeRect(5*k,5*k,w-10*k,h-10*k);ctx.lineWidth=1.2*k;ctx.strokeRect(11*k,11*k,w-22*k,h-22*k);
  const nm=(maps.find(m=>m.id==cur)||{}).name||'Map';ctx.font=`italic bold ${22*k}px Georgia,serif`;const tw=ctx.measureText(nm).width+36*k;
  ctx.fillStyle='rgba(20,17,12,.82)';ctx.fillRect(w/2-tw/2,16*k,tw,34*k);ctx.lineWidth=1.2*k;ctx.strokeRect(w/2-tw/2,16*k,tw,34*k);ctx.fillStyle='#ffe9a8';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(nm,w/2,34*k);
  const cx=w-62*k,cy=h-62*k,R1=34*k,R2=11*k;ctx.fillStyle='rgba(20,17,12,.7)';ctx.beginPath();ctx.arc(cx,cy,R1+12*k,0,7);ctx.fill();ctx.beginPath();ctx.arc(cx,cy,R1+5*k,0,7);ctx.stroke();
  for(let i=0;i<4;i++){const a=i*Math.PI/2-Math.PI/2;ctx.fillStyle=i==0?'#e05050':'#e8d9a8';ctx.beginPath();ctx.moveTo(cx+Math.cos(a)*R1,cy+Math.sin(a)*R1);ctx.lineTo(cx+Math.cos(a+.6)*R2,cy+Math.sin(a+.6)*R2);ctx.lineTo(cx+Math.cos(a-.6)*R2,cy+Math.sin(a-.6)*R2);ctx.fill()}
- ctx.fillStyle='#ffe9a8';ctx.font=`bold ${12*k}px Georgia,serif`;ctx.fillText('N',cx,cy-R1-17*k)}
+ ctx.fillStyle='#ffe9a8';ctx.font=`bold ${12*k}px Georgia,serif`;ctx.fillText('N',cx,cy-R1-17*k);
+ if(!legend){let L=1;for(const n of[1,2,5,10,20,50,100,200,500,1000,2000,5000])if(n*S*view.z<=150*k)L=n;const bw=L*S*view.z,x0=24*k,y0=h-30*k;ctx.fillStyle='rgba(20,17,12,.7)';ctx.fillRect(x0-8*k,y0-16*k,bw+16*k+70*k,26*k);
+  ctx.fillStyle='#e8d9a8';for(let i=0;i<4;i++)if(i%2==0)ctx.fillRect(x0+bw*i/4,y0-3*k,bw/4,5*k);ctx.strokeStyle='#e8d9a8';ctx.lineWidth=1.2*k;ctx.strokeRect(x0,y0-3*k,bw,5*k);ctx.textAlign='left';ctx.font=`${11*k}px Georgia,serif`;ctx.fillText(+(L*sc.v).toPrecision(3)+' '+sc.u,x0+bw+8*k,y0)}}
 function openWeb(){const n=facs.length;$('fbox').innerHTML=`<div class="ihead"><b style="flex:1;font-size:16px">🕸️ Faction relations</b><button data-fa="1">✕</button></div>`+(n<2?'<i>Add at least two factions.</i>':'<canvas id="fwc" width="440" height="440" style="width:100%;max-width:440px;cursor:default"></canvas><div style="font-size:12px;margin-top:6px">Green: allied. Light green: friendly. Orange dashed: rival. Red dashed: at war. Set relations with the ⚙️ button on each faction.</div>');$('fmodal').hidden=false;if(n<2)return;
  const g=$('fwc').getContext('2d'),P=facs.map((f,i)=>[220+Math.cos(i/n*6.2832-1.5708)*140,220+Math.sin(i/n*6.2832-1.5708)*140]),ST={Allied:['#3fae6a',5,[]],Friendly:['#9fd59a',3,[]],Rival:['#e0a030',3,[6,5]],'At war':['#d33b3b',4,[2,4]]};
  facs.forEach((f,i)=>facs.forEach((o,j)=>{const r=(f.rel||{})[j];if(j<=i||!ST[r])return;g.strokeStyle=ST[r][0];g.lineWidth=ST[r][1];g.setLineDash(ST[r][2]);g.beginPath();g.moveTo(P[i][0],P[i][1]);g.lineTo(P[j][0],P[j][1]);g.stroke()}));
@@ -312,6 +464,12 @@ function pickWeighted(n,minD,wf){const out=[],P=marks.filter(m=>!m.pts&&!m.reg).
 function link(a,b,t,bad){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy)||1;for(let k=1;k<12;k++){const x=Math.round(a[0]+dx*k/12),y=Math.round(a[1]+dy*k/12);if(bad(ter[y*W+x]))return 0}
  const nx=-dy/L,ny=dx/L,o1=(R()-.5)*L*.18,o2=(R()-.5)*L*.18,P=[a,[a[0]+dx*.33+nx*o1,a[1]+dy*.33+ny*o1],[a[0]+dx*.66+nx*o2,a[1]+dy*.66+ny*o2],b].map(p=>[(p[0]+.5)*S,(p[1]+.5)*S]);
  marks.push({pts:P,t,n:'',d:'',x:(P[1][0]+P[2][0])/2,y:(P[1][1]+P[2][1])/2,i:'',l:false});return 1}
+// a road between two cells that follows the terrain; skipped when the detour is absurd
+// town-name endings that suit the surroundings: harbours, river crossings, woods, hills…
+function placeSuf(c,coast){if(R()<.4)return PK(FS);const b=ter[c[1]*W+c[0]],x=(c[0]+.5)*S,y=(c[1]+.5)*S,riv=marks.some(m=>m.pts&&m.t==0&&pdist(m.pts,x,y)<S*2.5);
+ const T=coast?['port','haven','mouth','strand','wick']:riv?['ford','bridge','mill','water']:{2:['wood','holt','hurst','den'],3:['tor','ridge','barrow','hill'],4:['crag','gate','hold','peak'],5:['well','spring','dune'],6:['frost','rime','hold'],7:['mire','fen','marsh'],9:['field','stead','mead']}[b];return PK(T||FS)}
+function road(a,b,t){const P=routePts([(a[0]+.5)*S,(a[1]+.5)*S],[(b[0]+.5)*S,(b[1]+.5)*S],t,false);if(!P||P=='same')return 0;const m={pts:P,t,n:'',d:'',i:'',l:false};
+ if(plen(m)>Math.hypot(a[0]-b[0],a[1]-b[1])*2.2+2)return 0;const q=P[P.length>>1];m.x=q[0];m.y=q[1];marks.push(m);return 1}
 function mst(pts,extra,maxD){const n=pts.length,E=[],ed=[];for(let i=0;i<n;i++)for(let j=i+1;j<n;j++)ed.push([Math.hypot(pts[i][0]-pts[j][0],pts[i][1]-pts[j][1]),i,j]);ed.sort((a,b)=>a[0]-b[0]);
  const par=[...Array(n).keys()],f=i=>par[i]==i?i:par[i]=f(par[i]);for(const[d,i,j]of ed){if(f(i)!=f(j)){par[f(i)]=f(j);E.push([i,j])}else if(d<maxD&&R()<extra)E.push([i,j])}return E}
 const VEN={
@@ -319,19 +477,24 @@ medieval:[['🍺',[3,2],2,()=>'The '+PK(TA)+' '+PK(TN),'A noisy tavern full of r
 scifi:[['🏪',[3],2,()=>PK(NV)+' Exchange','A bustling trade floor.'],['🏢',[3,4],1,()=>PK(NV)+' Tower','A corporate tower dominating the skyline.'],['🔬',[2,5],1,()=>'Lab '+sname(),'A research lab with restricted access.'],['🏭',[5],1,()=>'Fabricator '+sname(),'Automated fabrication lines.'],['⚡',[5],1,()=>'Reactor '+PK(['One','Two','Prime']),'The city power plant.'],['🛡️',[4],1,()=>'Security Hub','Command centre of the security division.'],['🏥',[2],1,()=>'Medbay '+PK(['North','Central','Low']),'A busy public medical bay.'],['🌳',[6],1,()=>'Arboretum','A pocket of green under glass.'],['🚇',[1],1,()=>'Transit Hub','Maglane interchange.'],['🚀',[0],2,()=>'Landing Pad '+PK(['A','B','C','7','12']),'Shuttles come and go from this pad.'],['💧',[7],1,()=>'Water Works','Coolant and water reclamation.']],
 nomad:[['⛺',[4],1,()=>"Chieftain's Tent",'The largest tent in camp, hung with banners.'],['🔥',[3],1,()=>'Council Fire','Where decisions and stories are shared.'],['🐎',[6],1,()=>'Horse Lines','Tethered horses and riding gear.'],['🐑',[6],1,()=>'Herd Pens','Livestock kept close for the night.'],['🪶',[2],1,()=>"Shaman's Tent",'Charms, herbs and quiet counsel.'],['🧵',[5],1,()=>'Weavers','Felt, rope and woven goods.'],['💧',[7],1,()=>'The Well','The reason the camp is here.'],['🎪',[3],1,()=>'Gathering Tent','Feasts and meetings happen under this canopy.'],['🏺',[2],1,()=>"Trader's Wagon",'A travelling merchant with odd wares.']],
 scrap:[['🛠️',[5],2,()=>PK(['Rust','Scrap','Cinder'])+' Yard','Salvage sorted by hand and by greed.'],['🏪',[3],1,()=>'Trading Post','Barter only; no questions asked.'],['🛡️',[4],1,()=>'Main Gate','Guarded day and night.'],['⛽',[5],1,()=>'Fuel Depot','Fuel is worth more than gold here.'],['💧',[7],1,()=>'Water Tanks','Rationed water, tightly guarded.'],['🍺',[2],1,()=>'The '+PK(['Rusty','Last','Broken'])+' Cup','A bar built from wreckage.'],['📻',[2],1,()=>'Radio Shack','Broadcasts news and static.'],['💀',[8],1,()=>'The Pit','Toxic ground nobody visits twice.']]};
-function populate(){snap();const n0=marks.length,coast=(x,y)=>{for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const xx=x+i,yy=y+j;if(xx>=0&&yy>=0&&xx<W&&yy<H&&ter[yy*W+xx]==0)return 1}return 0},
+function populate(ns){if(!ns)snap();const n0=marks.length,coast=(x,y)=>{for(let j=-3;j<=3;j++)for(let i=-3;i<=3;i++){const xx=x+i,yy=y+j;if(xx>=0&&yy>=0&&xx<W&&yy<H&&ter[yy*W+xx]==0)return 1}return 0},
  used=new Set(marks.map(m=>m.n).filter(Boolean)),put=(c,i,n,d)=>{let u=n,k=1;while(used.has(u))u=n+' '+(++k);used.add(u);marks.push({x:(c[0]+.5)*S,y:(c[1]+.5)*S,i,n:u,l:false,d})};
  if(mode=='fantasy'){const nT=Math.max(6,Math.round(W*H/450)),T=pickWeighted(nT,7,(x,y,b)=>b?({1:3,2:1,3:1.5,5:.4,6:.2,7:.3,8:.1}[b]||0)*(coast(x,y)?2:1):0);
-  T.forEach((c,k)=>{const cs=coast(c[0],c[1]),cap=k<2,port=!cap&&cs&&R()<.5,pop=cap?12000+Math.floor(R()*18000):port?2000+Math.floor(R()*4000):200+Math.floor(R()*1500);
-   put(c,cap?'🏰':port?'⚓':'🏘️',(port?PK(['Port ','']):cap?'':PK(['','','Fort ']))+PK(FP)+PK(FS),`${cap?'A walled capital':port?'A busy harbour town':'A farming settlement'} of roughly ${pop.toLocaleString()} people.${cs&&!port?' It lies near the coast.':''}`)});
+  const ports=[];T.forEach((c,k)=>{const cs=coast(c[0],c[1]),cap=k<2,port=!cap&&cs&&R()<.5,pop=cap?12000+Math.floor(R()*18000):port?2000+Math.floor(R()*4000):200+Math.floor(R()*1500);if(port||(cap&&cs))ports.push(c);
+   put(c,cap?'🏰':port?'⚓':'🏘️',(port?PK(['Port ','']):cap?'':PK(['','','Fort ']))+PK(FP)+placeSuf(c,cs),`${cap?'A walled capital':port?'A busy harbour town':'A farming settlement'} of roughly ${pop.toLocaleString()} people.${cs&&!port?' It lies near the coast.':''}`);if(cap)marks[marks.length-1].ps=1.35});
   pickWeighted(Math.max(2,Math.round(nT/3)),6,(x,y,b)=>({3:2,4:3,7:1,8:2,2:1}[b]||0)).forEach(c=>{const k=PK([['🕳️',()=>sname()+' Caverns','A dark cave mouth; locals tell of things that live inside.'],['🏚️',()=>'Ruins of '+sname(),'Crumbling ruins from a forgotten age.'],['🗼',()=>sname()+' Spire','A lonely tower, abandoned or perhaps not.'],['🐉',()=>sname()+"'s Lair",'Scorched earth and old bones mark a great beast’s lair.']]);put(c,k[0],k[1](),k[2])});
   pickWeighted(Math.max(1,Math.round(nT/6)),8,(x,y,b)=>b==2?1:0).forEach(c=>put(c,'🌲',PK(FP)+' Grove','An ancient grove that locals avoid after dark.'));
-  const tw=T.filter((c,k)=>true);mst(tw,.3,16).forEach(([i,j])=>link(tw[i],tw[j],1,b=>b==0||b==4))}
+  mst(T,.3,16).forEach(([i,j])=>road(T[i],T[j],1));
+  {const nearN=(p)=>{let b=null,bd=1e18;for(const m of marks)if(!m.pts&&!m.reg&&!m.l&&m.n){const d=(m.x-p[0])**2+(m.y-p[1])**2;if(d<bd){bd=d;b=m}}return b?b.n:''};
+   for(const m of marks.slice(n0))if(m.pts&&m.t==1&&!m.n&&plen(m)>=22){const f=PK(FP);m.n=PK([`The ${f}way`,`The ${f} Road`,`The Old ${f} Road`,`The ${f}march Way`]);const a=nearN(m.pts[0]),b=nearN(m.pts[m.pts.length-1]);if(a&&b&&a!=b)m.d=`The main road between ${a} and ${b}.`}}
+  // sea lanes between harbours that are far apart by land or on different islands
+  if(ports.length>1)mst(ports,.15,30).forEach(([i,j])=>{const a=ports[i],b=ports[j],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(d<10||d>Math.max(W,H)*.6)return;const P=routePts([(a[0]+.5)*S,(a[1]+.5)*S],[(b[0]+.5)*S,(b[1]+.5)*S],3,true);
+   if(!P||P=='same')return;const m={pts:P,t:3,n:'',d:'',i:'',l:false};if(plen(m)>d*2.5)return;const q=P[P.length>>1];m.x=q[0];m.y=q[1];marks.push(m)})}
  else if(mode=='planet'){const nC=Math.max(4,Math.round(W*H/900)),cap=pickWeighted(1,1,(x,y,b)=>({1:3,2:1,5:.6}[b]||0)),it=[];
   cap.forEach(c=>{put(c,'🏙️',sname()+' City',"The planet's largest settlement and administrative hub.");it.push(c)});
   [['⛏️','Mine',{3:3,4:2,5:1},'A mining outpost digging into rich ore veins.'],['🔬','Research Station',{6:3,5:1,8:2,4:1},'A research station studying the local environment.'],['📡','Relay',{4:3,3:1},'A communications relay on high ground.'],['🛡️','Outpost',{1:1,2:1,3:1,5:1},'A fortified outpost watching the frontier.']].forEach(sp=>pickWeighted(Math.max(1,Math.round(nC/3)),6,(x,y,b)=>sp[2][b]||0).forEach(c=>{put(c,sp[0],`${sname()} ${sp[1]}`,sp[3]);it.push(c)}));
   if(cap[0])pickWeighted(1,2,(x,y,b)=>b&&Math.hypot(x-cap[0][0],y-cap[0][1])<7?1:0).forEach(c=>put(c,'🚀','Spaceport','Landing fields and cargo sheds.'));
-  mst(it,.25,18).forEach(([i,j])=>link(it[i],it[j],1,b=>b==0))}
+  mst(it,.25,18).forEach(([i,j])=>road(it[i],it[j],1))}
  else if(mode=='space'){const ST=['🟡','🟠','🔴','🔵','⚪'],st=marks.filter(m=>!m.pts&&!m.reg&&ST.includes(m.i)),pts=st.map(m=>[Math.floor(m.x/S),Math.floor(m.y/S)]);
   st.forEach(m=>{if(R()<.2)marks.push({x:m.x+14,y:m.y+10,i:'🛰️',n:`${m.n} Station`,l:false,d:'A trade and refuelling station in orbit.'})});
   pickWeighted(4,5,(x,y,b)=>b<5?1:0).forEach(c=>put(c,PK(['💀','💀','☄️']),PK(['Derelict ','Wreck of the ','Drifting '])+sname(),'Adrift for a long time. Salvagers whisper about what is still aboard.'));
@@ -346,9 +509,31 @@ function populate(){snap();const n0=marks.length,coast=(x,y)=>{for(let j=-3;j<=3
    put(c,ic,PK(AP)+PK(AS),`An island of about ${o.cells.length} cells (${Math.round(o.cells.length*sc.v*sc.v)} ${sc.u}²), mostly ${BIOMES[dom][0].toLowerCase()}.`);cs.push(c)});
   mst(cs,.2,22).forEach(([i,j])=>link(cs[i],cs[j],0,()=>false))}
  else if(mode=='town'){const k=Math.sqrt(W*H/5760);for(const v of VEN[ptype]||[])pickWeighted(Math.max(1,Math.round(v[2]*k)),3,(x,y,b)=>v[1].includes(b)?1:0).forEach(c=>put(c,v[0],v[3](),v[4]))}
+ if(mode!='town')featureLabels();
  select(null);flash(`Added ${marks.length-n0} items. Undo removes them.`)}
-$('pop').onclick=populate;
-function nearText(m){if(m.pts)return '';const D=['E','SE','S','SW','W','NW','N','NE'],P=marks.filter(p=>p!==m&&!p.pts&&!p.reg&&!p.l&&p.n).map(p=>({p,d:Math.hypot(p.x-m.x,p.y-m.y)/S*sc.v,a:Math.atan2(p.y-m.y,p.x-m.x)})).sort((a,b)=>a.d-b.d).slice(0,3);
+// Names big terrain features (ranges, forests, deserts, seas) with labels angled along each feature's long axis.
+function featureLabels(){const used=new Set(marks.filter(m=>m.l).map(m=>m.n)),seen=new Uint8Array(W*H),k=Math.max(1,W*H/5760),cap=s=>s[0].toUpperCase()+s.slice(1),fp=()=>PK(FP),
+ FN={4:[14,()=>`The ${fp()}${PK(['spine','crown','teeth','horn','fang'])} Mountains`,'#efe4c8'],2:[28,()=>`The ${fp()}${PK(['wood','weald','shaw'])}`,'#d8f3c6'],5:[25,()=>`The ${PK(['Burning','Red','Endless','Whispering','Glass'])} ${PK(['Sands','Wastes','Dunes'])}`,'#fff0c0'],
+  7:[12,()=>cap(fp().toLowerCase()+PK(['fen','mire','marsh'])),'#d0e6c8'],6:[30,()=>`The ${PK(['Frozen','White','Bitter','Silent'])} ${PK(['Waste','Reach','Expanse'])}`,'#ffffff'],9:[25,()=>`The ${fp()} ${PK(['Steppe','Downs','Plains'])}`,'#fff4c8'],3:[30,()=>`The ${fp()} Hills`,'#f4ecc8']},
+ sn=()=>sname().split(' ')[0];const reFN=o=>{for(const k in FN)delete FN[k];Object.assign(FN,o)};if(mode=='space')reFN({1:[30,()=>`The ${sn()} Nebula`,'#c8d4ff'],2:[22,()=>`The ${PK(['Rose','Crimson','Veil','Lantern','Ember'])} Nebula`,'#ffc8e8'],3:[20,()=>`${sn()} Dust Lane`,'#e8d8c0'],4:[16,()=>`The ${sn()} Belt`,'#e0dcd4'],8:[14,()=>`The ${sn()} Maelstrom`,'#bff4ff']});
+ else if(mode=='sky')reFN({1:[30,()=>`The ${PK(['White','Silver','Endless','Drowsy'])} Banks`,'#ffffff'],2:[14,()=>`The ${PK(['Howling','Black','Thunder','Iron'])} Front`,'#fff2a0']});
+ const L0=marks.filter(m=>m.l),add=(n,x,y,c,sz,rot)=>{if(L0.some(m=>Math.hypot(m.x-x,m.y-y)<S*7))return;let u=n,i=1;while(used.has(u))u=n+' '+['II','III','IV','V'][Math.min(3,i++-1)];used.add(u);marks.push({x,y,i:'',n:u,l:true,d:'',c,sz,rot});L0.push(marks[marks.length-1])},sci=mode=='planet',named=mode=='space'||mode=='sky';
+ const comps={};for(let i=0;i<W*H;i++){const b=ter[i];if(seen[i]||!FN[b])continue;const cells=[],st=[i];seen[i]=1;
+  while(st.length){const j=st.pop();cells.push(j);const x=j%W,y=j/W|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx<0||yy<0||xx>=W||yy>=H)continue;const q=yy*W+xx;if(!seen[q]&&ter[q]==b){seen[q]=1;st.push(q)}}}
+  if(cells.length>=FN[b][0]*Math.sqrt(k))(comps[b]=comps[b]||[]).push(cells)}
+ for(const b in comps)comps[b].sort((p,q)=>q.length-p.length).slice(0,Math.round(2*Math.sqrt(k))).forEach(cells=>{let sx=0,sy=0;for(const j of cells){sx+=j%W;sy+=j/W|0}sx/=cells.length;sy/=cells.length;
+  let xx=0,yy=0,xy=0,best=cells[0],bd=1e9;for(const j of cells){const dx=j%W-sx,dy=(j/W|0)-sy;xx+=dx*dx;yy+=dy*dy;xy+=dx*dy;const d=dx*dx+dy*dy;if(d<bd){bd=d;best=j}}
+  const ang=.5*Math.atan2(2*xy,xx-yy)*180/Math.PI,rot=Math.max(-30,Math.min(30,Math.round(ang/15)*15)),nm=sci?`${sname().split(' ')[0]} ${BIOMES[b][0]}`:FN[b][1]();
+  add(nm,(best%W+.5)*S,((best/W|0)+.5)*S,sci?'#f0f0f0':FN[b][2],cells.length>120?1:.8,rot)});
+ if(named)return;
+ // seas: open-water points farthest from any coast
+ const dist=new Int16Array(W*H).fill(-1),q=[];for(let i=0;i<W*H;i++)if(ter[i]){dist[i]=0;q.push(i)}if(!q.length)return;
+ for(let h=0;h<q.length;h++){const j=q[h],x=j%W,y=j/W|0;for(const n of[x>0?j-1:-1,x<W-1?j+1:-1,y>0?j-W:-1,y<H-1?j+W:-1])if(n>=0&&dist[n]<0){dist[n]=dist[j]+1;q.push(n)}}
+ const C=[],bm=Math.max(6,W*.08);for(let i=0;i<W*H;i++){const x=i%W,y=i/W|0;if(!ter[i]&&dist[i]>=4&&Math.min(x,W-1-x)>=bm*1.4&&Math.min(y,H-1-y)>=bm*.7)C.push(i)}C.sort((a,b)=>dist[b]-dist[a]);const pk=[],sp=Math.max(18,W/5);
+ for(const i of C){if(pk.length>=Math.round(2+Math.sqrt(k)))break;const x=i%W,y=i/W|0;if(pk.some(p=>Math.hypot(p[0]-x,p[1]-y)<sp))continue;pk.push([x,y])}
+ for(const[x,y]of pk)add(sci?`${sname().split(' ')[0]} ${BIOMES[0][0].replace(/^.*\b(Sea|Ocean|Maria|Basin)\b.*$/,'$1')}`:PK([()=>`The ${PK(['Sunset','Shivering','Jade','Grey','Dragon','Sapphire','Stormy','Silent'])} Sea`,()=>`Sea of ${sname().split(' ')[0]}`,()=>`The ${fp()} Deep`])(),(x+.5)*S,(y+.5)*S,'#cfe6ff',1.3,0)}
+$('pop').onclick=()=>populate();
+function nearText(m){if(m.pts)return '';const D=['E','SE','S','SW','W','NW','N','NE'],P=marks.filter(p=>p!==m&&!p.pts&&!p.reg&&!p.l&&p.n&&!hidP(p)).map(p=>({p,d:Math.hypot(p.x-m.x,p.y-m.y)/S*sc.v,a:Math.atan2(p.y-m.y,p.x-m.x)})).sort((a,b)=>a.d-b.d).slice(0,3);
  return P.length?' Nearest: '+P.map(o=>`${o.p.n} (${o.d<10?o.d.toFixed(1):Math.round(o.d)} ${sc.u} ${D[((Math.round(o.a/Math.PI*4)%8)+8)%8]}${mode=='fantasy'&&sc.u=='mi'?`, about ${(o.d/24).toFixed(1)} days on foot`:''})`).join('; ')+'.':''}
 $('iicon').onclick=()=>{const m=marks[sel];if(!m||m.pts||m.reg||m.l)return;snap();m.i=MARKS[(MARKS.indexOf(m.i)+1)%MARKS.length];$('iicon').textContent=m.i;draw()};
 const NPC=["Marta","Orlin","Veska","Dray","Kessa","Tobin","Ilyra","Garrick","Nessa","Hadrik"],TIT=["the Elder","the Quiet","Redhand","of Three Rivers","the Lame","Ironbrow","the Younger"];
@@ -363,13 +548,13 @@ function csvAll(){const c0=cur,u=undos,u2=redos,rows=[['map','kind','icon','name
  for(const id of maps.map(x=>x.id)){openMap(id,false);const mp=maps.find(x=>x.id==cur);for(const m of marks){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,Math.max(0,m.y/S|0)),f=fac[cy*W+cx];
   rows.push([mp.name,m.pts?'path':m.bld?'building':m.reg?'district':m.l?'label':'pin',m.pts?'':m.i,m.n||'',+(m.x/S*sc.v).toFixed(1),+(m.y/S*sc.v).toFixed(1),sc.u,BIOMES[ter[cy*W+cx]][0],f&&facs[f-1]?facs[f-1].n:'',(m.d||'').replace(/\s+/g,' '),(maps.find(x=>x.id==m.link)||{}).name||''])}}
  openMap(c0,false);undos=u;redos=u2;return rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n')}
-function autoFactions(){const n=facs.length;if(!n)return;snap();const mn=Math.min(W,H),ok=(x,y)=>{const b=ter[y*W+x];return mode=='sky'?b>=3&&b<=6:mode=='space'?true:mode=='town'?b>=2:b>0},cells=[];
+function autoFactions(ns){const n=facs.length;if(!n)return;if(!ns)snap();const mn=Math.min(W,H),ok=(x,y)=>{const b=ter[y*W+x];return mode=='sky'?b>=3&&b<=6:mode=='space'?true:mode=='town'?b>=2:b>0},cells=[];
  for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(ok(x,y))cells.push([x,y]);if(!cells.length){flash('Nothing to claim on this map.');return}
  const seeds=[cells[Math.floor(R()*cells.length)]];while(seeds.length<n){let best=null,bd=-1;for(let t=0;t<80;t++){const c=cells[Math.floor(R()*cells.length)],d=Math.min(...seeds.map(q=>Math.hypot(q[0]-c[0],q[1]-c[1])));if(d>bd){bd=d;best=c}}seeds.push(best)}
  const o1=Math.floor(R()*900),o2=Math.floor(R()*900),lim=mode=='space'?mn*.3:1e9;fac.fill(0);
  for(const[x,y]of cells){const nz=(fbm(x*.09,y*.09,o1,o2,3)-.5)*mn*.25;let bi=0,bd=1e9;seeds.forEach((q,i)=>{const d=Math.hypot(q[0]-x,q[1]-y)+nz*(i%2?1:-1);if(d<bd){bd=d;bi=i}});if(bd<lim)fac[y*W+x]=bi+1}
  vis.f=1;ui();draw();flash('Territories assigned. Undo to revert.')}
-$('autof').onclick=autoFactions;
+$('autof').onclick=()=>autoFactions();
 function mixText(m){const c={};for(const j of m.cells)c[ter[j]]=(c[ter[j]]||0)+1;const k=Object.keys(c).sort((a,b)=>c[b]-c[a]);if(k.length<2)return '';return ` Terrain mix: ${k.slice(0,3).map(i=>`${(BIOMES[i]||['?'])[0].toLowerCase()} ${Math.round(c[i]/m.cells.length*100)}%`).join(', ')}.`}
 const colName=i=>{let t='';i++;while(i>0){t=String.fromCharCode(65+(i-1)%26)+t;i=Math.floor((i-1)/26)}return t};
 function drawGrid(){const g=gsz*S,w=W*S,h=H*S,vx0=-view.x/view.z,vy0=-view.y/view.z,vx1=(cv.width-view.x)/view.z,vy1=(cv.height-view.y)/view.z,lab=g*view.z>=44;
@@ -388,7 +573,7 @@ function drawSv(){const[x0,y0,x1,y1]=svRect();ctx.fillStyle='rgba(100,200,255,.1
 function svInfo(){const[x0,y0,x1,y1]=svRect(),cnt=new Array(BIOMES.length).fill(0),fc={},cells=[];
  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){const j=y*W+x;cells.push(j);cnt[ter[j]]++;if(fac[j])fc[fac[j]]=(fc[fac[j]]||0)+1}
  const inR=m=>{const cx=m.x/S|0,cy=m.y/S|0;return cx>=x0&&cx<=x1&&cy>=y0&&cy<=y1};
- return{x0,y0,x1,y1,cnt,fc,cells,n:cells.length,pins:marks.filter(m=>!m.pts&&!m.reg&&!m.l&&inR(m)),paths:marks.filter(m=>m.pts&&m.pts.some(p=>inR({x:p[0],y:p[1]}))),regs:marks.filter(m=>m.reg&&inR(m))}}
+ return{x0,y0,x1,y1,cnt,fc,cells,n:cells.length,pins:marks.filter(m=>!m.pts&&!m.reg&&!m.l&&inR(m)&&!hidP(m)),paths:marks.filter(m=>m.pts&&!(vis.y&&m.gm)&&m.pts.some(p=>inR({x:p[0],y:p[1]}))),regs:marks.filter(m=>m.reg&&inR(m)&&!hidP(m))}}
 function surveyShow(){const o=svInfo(),pct=v=>Math.round(v/o.n*100);
  const rows=o.cnt.map((c,i)=>[c,BIOMES[i]]).filter(r=>r[0]).sort((a,b)=>b[0]-a[0]).map(r=>`<div class="frow" style="align-items:center"><span class="sw" style="background:${r[1][1]}"></span><span style="flex:1">${esc(r[1][0])}</span><span>${pct(r[0])}%</span></div>`).join('');
  const fr=Object.keys(o.fc).filter(k=>facs[k-1]).map(k=>`<span style="margin-right:8px"><span class="sw" style="background:${facs[k-1].c};display:inline-block"></span> ${esc(facs[k-1].n)} ${pct(o.fc[k])}%</span>`).join('')||'<i>No faction territory</i>';
@@ -399,7 +584,7 @@ $('sumc').onclick=e=>{const b=e.target.closest('[data-sv]');if(!b)return;if(b.da
  const dom=o.cnt.indexOf(Math.max(...o.cnt)),top=o.cnt.map((c,i)=>[c,i]).filter(r=>r[0]).sort((a,b)=>b[0]-a[0]).slice(0,3).map(r=>`${BIOMES[r[1]][0].toLowerCase()} (${Math.round(r[0]/o.n*100)}%)`).join(', '),nm=$('name').value.trim();$('name').value='';
  const m=mkReg(o.cells,dom,nm||'Surveyed area',`Mostly ${top}.${o.pins.length?' Contains '+o.pins.map(p=>p.n||'an unnamed site').join(', ')+'.':''}`);marks.push(m);sv=null;$('sumc').hidden=true;select(marks.length-1)};
 function buildWesteros(){
- maps=[{id:'wst',name:'Westeros',d:null},{id:'kl',name:"King's Landing",d:null}];cur='wst';proj='Westeros (fan map)';back=[];undos=[];redos=[];
+ maps=[{id:'wst',name:'Westeros',d:null},{id:'kl',name:"King's Landing",d:null}];cur='wst';proj='Westeros (fan map)';back=[];undos=[];redos=[];seed=null;notes='';$('mnotes').value='';
  applyMode('fantasy');setDims(160,100);sc={v:36,u:'mi'};scUI();
  const o=Array.from({length:4},()=>Math.floor(R()*900)),
  inP=(x,y,P)=>{let c=false;for(let i=0,j=P.length-1;i<P.length;j=i++){const a=P[i],b=P[j];if((a[1]>y)!=(b[1]>y)&&x<(b[0]-a[0])*(y-a[1])/(b[1]-a[1])+a[0])c=!c}return c},
@@ -509,32 +694,56 @@ function buildWesteros(){
  lab('Blackwater Bay',90,30);lab('Blackwater Rush',50,56);lab('Flea Bottom',54,41);
  stash();
  cur='wst';unpack(maps[0].d);renderTabs();$('pname').value=proj;ui()}
-let dm=0;$('demo').onclick=e=>{const b=e.currentTarget;if(!dm){dm=1;b.textContent='Click again to replace this project';setTimeout(()=>{dm=0;b.textContent='📜 Westeros demo'},3500);return}dm=0;b.textContent='📜 Westeros demo';buildWesteros();flash("Loaded a fan-made Westeros with a linked King's Landing map.")};
+let dm=0;$('demo').onclick=e=>{const b=e.currentTarget;if(!dm){dm=1;b.textContent='Click again to replace this project';setTimeout(()=>{dm=0;b.textContent='📜 Demo'},3500);return}dm=0;b.textContent='📜 Demo';buildWesteros();flash("Loaded a fan-made Westeros with a linked King's Landing map.")};
 let LQ=[];
 function lbl(t,x,y,sz,col,o){LQ.push(Object.assign({t,x,y,sz,col,pr:3},o))}
 function tw(q){ctx.font=`${q.it?'italic ':'bold '}${q.sz}px Georgia,serif`;return ctx.measureText(q.sp?q.t.split('\u200a').join('').split('').join('\u200a'):q.t).width}
+const FACO=[[0,0]];for(const r of[24,50,80,115,150])for(let k=0;k<10;k++){const t=k/10*6.2832+r;FACO.push([Math.cos(t)*r*1.6,Math.sin(t)*r*.8])}
 function flushLabels(){const vx0=-view.x/view.z-80,vy0=-view.y/view.z-40,vx1=(cv.width-view.x)/view.z+80,vy1=(cv.height-view.y)/view.z+40,k=ms,boxes=[],pad=2*k,hitB=b=>boxes.some(c=>b[0]<c[2]&&b[2]>c[0]&&b[1]<c[3]&&b[3]>c[1]);
  if(vis.m)for(const m of marks){if(m.pts||m.reg||m.l||m.x<vx0||m.x>vx1||m.y<vy0||m.y>vy1)continue;const r=13*k;boxes.push([m.x-r,m.y-r,m.x+r,m.y+r])}
  ctx.textAlign='center';ctx.textBaseline='middle';LQ.sort((a,b)=>a.pr-b.pr);
  for(const q of LQ){if(!q.t||q.x<vx0||q.x>vx1||q.y<vy0||q.y>vy1)continue;const w=tw(q),h=q.sz*1.2;let C;
   if(q.kind=='pin')C=[[q.x,q.y+22*k],[q.x,q.y-24*k],[q.x+15*k+w/2,q.y+2*k],[q.x-15*k-w/2,q.y+2*k],[q.x,q.y+38*k]].map(p=>({x:p[0],y:p[1]}));
+  else if(q.kind=='fac'){const k2=ms;C=FACO.map(o=>({x:q.x+o[0]*k2,y:q.y+o[1]*k2})).filter(c=>{const cx=c.x/S|0,cy=c.y/S|0;return cx>=0&&cy>=0&&cx<W&&cy<H&&fac[cy*W+cx]==q.f})}
   else if(q.kind=='reg')C=[[q.x,q.y],[q.x,q.y-16*k],[q.x,q.y+16*k]].map(p=>({x:p[0],y:p[1]}));
   else if(q.kind=='path'){const P=q.pts,Ls=[];let tot=0;for(let i=1;i<P.length;i++){const d=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);Ls.push(d);tot+=d}
    C=[.5,.3,.7,.15,.85].map(f=>{let t=f*tot,i=0;while(i<Ls.length-1&&t>Ls[i]){t-=Ls[i];i++}const a=P[i],b=P[i+1]||a,u=Ls[i]?t/Ls[i]:0;let ang=Math.atan2(b[1]-a[1],b[0]-a[0]);if(ang>Math.PI/2)ang-=Math.PI;if(ang<-Math.PI/2)ang+=Math.PI;return{x:a[0]+(b[0]-a[0])*u+Math.sin(ang)*9*k,y:a[1]+(b[1]-a[1])*u-Math.cos(ang)*9*k,rot:ang}})}
-  else C=[{x:q.x,y:q.y}];
+  else C=[{x:q.x,y:q.y,rot:q.rot||0}];
   for(const c of C){const bw=c.rot?w*Math.abs(Math.cos(c.rot))+h*Math.abs(Math.sin(c.rot)):w,bh=c.rot?w*Math.abs(Math.sin(c.rot))+h*Math.abs(Math.cos(c.rot)):h,b=[c.x-bw/2-pad,c.y-bh/2-pad,c.x+bw/2+pad,c.y+bh/2+pad];
    if(q.kind=='area'||!hitB(b)){boxes.push(b);if(c.rot){ctx.save();ctx.translate(c.x,c.y);ctx.rotate(c.rot);text(q.t,0,0,q.sz,q.col,q.sp,q.it);ctx.restore()}else text(q.t,c.x,c.y,q.sz,q.col,q.sp,q.it);break}}}
  LQ=[]}
 function applyMode(k,pt){mode=k;if(pt)ptype=pt;if(k=='town'&&!TS[ptype])ptype='medieval';if(k=='planet'&&!PT[ptype])ptype='terran';M=MODES[k];const P=k=='planet'?PT[ptype]:k=='town'?TS[ptype]:null;
- BIOMES=P?P.b.map((e,i)=>[e[0],e[1],P.dc[i]]):M.b;MARKS=P&&P.m||M.m;FLAV=M.t;facs=JSON.parse(JSON.stringify(P&&P.f||M.f));fsel=1;biome=1;mark=0;ptp=0;tool='pan';
+ BIOMES=defBiomes();MARKS=P&&P.m||M.m;FLAV=M.t;facs=JSON.parse(JSON.stringify(P&&P.f||M.f));fsel=1;biome=1;mark=0;ptp=0;tool='pan';
  $('ptwrap').hidden=!(k=='planet'||k=='town');$('globewrap').hidden=k!='planet';$('pth').textContent=k=='town'?'Settlement style':'Planet type';$('ptype').innerHTML=(VO[k]||[]).map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('');$('ptype').value=ptype;sc=JSON.parse(JSON.stringify(SCD[k=='town'?ptype:k]||{v:1,u:'cells'}));scUI();$('autod').hidden=k!='town';ui()}
 $('ptype').onchange=e=>{snap();applyMode(mode,e.target.value);setDims(W,H);generate()};
 const rr=a=>a[0]+R()*(a[1]-a[0]);
 const SY=["ka","vor","el","tha","ry","zen","ar","kos","ix","mi","lu","an","or","ve","sa","dra","gal","nu"];
 function sname(){let s='';for(let i=0,n=2+(R()<.4);i<n;i++)s+=SY[Math.floor(R()*SY.length)];return s[0].toUpperCase()+s.slice(1)+(R()<.3?' '+['Prime','II','III','Minor','Major'][Math.floor(R()*5)]:'')}
-function generate(){fac.fill(0);marks=[];sel=null;$('info').hidden=true;
- if(mode=='space')genSpace();else if(mode=='sky')genSky();else if(mode=='town')genTown(ptype);else genLand(mode=='planet'?PT[ptype]:FANT);
+function generate(s){fac.fill(0);fog.fill(0);party=null;msel.clear();marks=[];sel=null;$('info').hidden=true;
+ seed=s==null?Math.floor(Math.random()*1e6):s;$('seed').value=seed;rng=mb32(seed);
+ try{if(mode=='space')genSpace();else if(mode=='sky')genSky();else if(mode=='town')genTown(ptype);else genLand(mode=='planet'?PT[ptype]:FANT)}finally{rng=Math.random}
  draw()}
+$('seed').onchange=e=>{const v=Math.floor(Math.abs(+e.target.value));if(!isFinite(v))return;snap();generate(v);flash('Rebuilt map from seed '+v+'.')};
+// Rivers: priority-flood from the sea gives every land cell a downhill route to the coast; rivers follow it from high ground.
+function genRivers(e,sea,hmax,k){const N=W*H,par=new Int32Array(N).fill(-1),done=new Uint8Array(N),key=new Float32Array(N),hp=[];
+ const push=(i,v)=>{key[i]=v;hp.push(i);let c=hp.length-1;while(c){const p=(c-1)>>1;if(key[hp[p]]<=key[hp[c]])break;[hp[p],hp[c]]=[hp[c],hp[p]];c=p}},
+ pop=()=>{const top=hp[0],l=hp.pop();if(hp.length){hp[0]=l;let c=0;for(;;){const a=2*c+1,b=a+1;let m=c;if(a<hp.length&&key[hp[a]]<key[hp[m]])m=a;if(b<hp.length&&key[hp[b]]<key[hp[m]])m=b;if(m==c)break;[hp[m],hp[c]]=[hp[c],hp[m]];c=m}}return top};
+ for(let i=0;i<N;i++)if(ter[i]==0){done[i]=1;const x=i%W,y=i/W|0;if((x>0&&ter[i-1])||(x<W-1&&ter[i+1])||(y>0&&ter[i-W])||(y<H-1&&ter[i+W]))push(i,e[i])}
+ if(!hp.length)return;
+ while(hp.length){const i=pop(),x=i%W,y=i/W|0;for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if((!dx&&!dy)||xx<0||yy<0||xx>=W||yy>=H)continue;const j=yy*W+xx;if(done[j])continue;done[j]=1;par[j]=i;push(j,Math.max(e[j],key[i])+R()*.004)}}
+ const riv=new Int16Array(N).fill(-1),src=[],n=Math.round(W*H/650*k);
+ for(let i=0;i<N;i++)if(ter[i]&&(e[i]-sea)/(hmax-sea||1)>.32)src.push(i);
+ for(let i=src.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[src[i],src[j]]=[src[j],src[i]]}
+ const used=[],out=[];
+ for(const s of src){if(out.length>=n)break;const sx=s%W,sy=s/W|0;if(used.some(u=>Math.hypot(u[0]-sx,u[1]-sy)<7))continue;
+  const P=[s];let c=s,join=-1;while(par[c]>=0&&ter[c]&&P.length<4000){c=par[c];P.push(c);if(riv[c]>=0){join=riv[c];break}}
+  if(P.length<(join>=0?5:9))continue;used.push([sx,sy]);const id=out.length;for(const q of P)if(riv[q]<0)riv[q]=id;out.push({P,join})}
+ const sci=mode=='planet';
+ out.forEach((r,id)=>{const P=r.P,pts=[];for(let i=0;i<P.length;i+=2){const q=P[i],j=i&&i<P.length-1?.35:0;pts.push([(q%W+.5+(R()-.5)*j)*S,((q/W|0)+.5+(R()-.5)*j)*S])}
+  const l=P[P.length-1];if((P.length-1)%2)pts.push([(l%W+.5)*S,((l/W|0)+.5)*S]);
+  const big=P.length>=22,nm=big?(sci?sname()+' River':'The '+PK(FP)+PK(['water','run','flow','wash','brook'])):'',m=pts[pts.length>>1];
+  r.m={pts,t:0,n:nm,d:`Rises in the ${BIOMES[ter[P[0]]][0].toLowerCase()} and flows ${r.join>=0?'into a larger river':'down to the sea'}.`,x:m[0],y:m[1],i:'',l:false};marks.push(r.m)});
+ out.forEach(r=>{if(r.join>=0&&out[r.join].m.n)r.m.d=r.m.d.replace('a larger river',out[r.join].m.n)})}
 function fld(x,y,fr,O,i,o,wrap){const f=xx=>fbm(xx*fr,y*fr,O[i],O[i+1],o);return wrap?(f(x)*(W-x)+f(x-W)*x)/W:f(x)}
 function genLand(P){
  const N=W*H,fr=(3+R()*5)/Math.min(W,H),wrap=!!P.wrap,o=()=>Math.floor(R()*1300),O=Array.from({length:8},o);
@@ -552,7 +761,15 @@ function genLand(P){
   const h=(e[i]-sea)/(hmax-sea||1),lat=1-Math.abs(2*y/H-1),tt=Math.max(0,Math.min(1,.55*lat+.45*t[i]+cb))-h*.3,mm=m[i]+P.mb;let b;
   if(h>mt)b=tt<.3?6:4;else if(h>hl)b=tt<.22?6:3;
   else if(tt<.25)b=6;else if(w[i]>wT&&tt>.35)b=8;else if(tt>.62&&mm<.5)b=5;else if(mm>.68&&h<.1)b=7;else b=mm>.5?2:1;
-  ter[i]=b}}
+  ter[i]=b}
+ if(P.rv){genLakes(e,sea,hmax);genRivers(e,sea,hmax,P.rv)}}
+// a few inland lakes in low ground well away from the coast; rivers then drain into them
+function genLakes(e,sea,hmax){const N=W*H,d=new Int16Array(N).fill(-1),q=[];for(let i=0;i<N;i++)if(!ter[i]){d[i]=0;q.push(i)}if(!q.length)return;
+ for(let h=0;h<q.length;h++){const j=q[h],x=j%W,y=j/W|0;for(const n of[x>0?j-1:-1,x<W-1?j+1:-1,y>0?j-W:-1,y<H-1?j+W:-1])if(n>=0&&d[n]<0){d[n]=d[j]+1;q.push(n)}}
+ const C=[];for(let i=0;i<N;i++)if(d[i]>=8&&(e[i]-sea)/(hmax-sea||1)<.22&&ter[i]!=6)C.push(i);const n=Math.min(C.length,Math.round(R()*2.5*Math.sqrt(N/5760))),pk=[];
+ for(let t=0;t<n*10&&pk.length<n;t++){const c=C[Math.floor(R()*C.length)],cx=c%W,cy=c/W|0;if(pk.some(p=>Math.hypot(p[0]-cx,p[1]-cy)<14))continue;pk.push([cx,cy]);const r=2.4+R()*2.4,ph=R()*9;
+  for(let y=Math.floor(cy-r-2);y<=cy+r+2;y++)for(let x=Math.floor(cx-r-2);x<=cx+r+2;x++){if(x<1||y<1||x>=W-1||y>=H-1)continue;const a=Math.atan2(y-cy,x-cx),rr=r*(1+.25*Math.sin(a*3+ph)+.12*Math.sin(a*5+ph*2));if(Math.hypot(x-cx,y-cy)<=rr)ter[y*W+x]=0}
+  marks.push({x:(cx+.5)*S,y:(cy+.5)*S+(r+1.6)*S,i:'',n:mode=='planet'?sname().split(' ')[0]+' Lake':'Lake '+PK(FP)+PK(['mere','water','deep','glass']),l:true,d:'',c:'#cfe6ff',sz:.85,rot:0})}}
 function genSpace(){
  const N=W*H,fr=(3+R()*4)/Math.min(W,H),o=()=>Math.floor(R()*1300),O=Array.from({length:10},o),A=[0,1,2,3,4].map(()=>new Float32Array(N));
  const mu=[1,.9,1.3,2.6,1.1],oc=[5,3,4,3,4];
@@ -617,6 +834,27 @@ function globe(){if(mode!='planet'||gq)return;gq=requestAnimationFrame(()=>{gq=0
   im.data[k]=c[0]*l;im.data[k+1]=c[1]*l;im.data[k+2]=c[2]*l+Math.pow(r2,6)*70;im.data[k+3]=255}
  g.putImageData(im,0,0)})}
 $('rot').oninput=globe;
+{let gd=null;const gc=$('globe');gc.style.cursor='grab';gc.title='Drag to spin';gc.addEventListener('pointerdown',e=>{gd={x:e.clientX,v:+$('rot').value};gc.style.cursor='grabbing';try{gc.setPointerCapture(e.pointerId)}catch(x){}});
+ gc.addEventListener('pointermove',e=>{if(!gd)return;$('rot').value=String(((gd.v-(e.clientX-gd.x)/2)%100+100)%100);globe()});const end=()=>{gd=null;gc.style.cursor='grab'};gc.addEventListener('pointerup',end);gc.addEventListener('pointercancel',end)}
+function tidy(){if(mode=='town')return flash('Tidy is off for settlements: it would erase one-cell streets and walls.');snap();const o=ter.slice(),cnt=new Uint16Array(BIOMES.length);let ch=0;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){cnt.fill(0);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const xx=x+dx,yy=y+dy;if(xx>=0&&yy>=0&&xx<W&&yy<H)cnt[o[yy*W+xx]]++}
+  let b=o[y*W+x],bc=0;for(let k=0;k<cnt.length;k++)if(cnt[k]>bc){bc=cnt[k];b=k}if(bc>=5&&b!=o[y*W+x]){ter[y*W+x]=b;ch++}}
+ draw();flash(ch?`Tidied ${ch} stray cells. Undo to revert.`:'Nothing to tidy.')}
+$('tidy').onclick=tidy;
+$('tabs').addEventListener('dblclick',e=>{const b=e.target.closest('[data-tab]');if(!b)return;const m=maps.find(x=>x.id==b.dataset.tab);if(!m)return;const i=document.createElement('input');i.type='text';i.value=m.name;i.style.width=Math.max(90,b.offsetWidth)+'px';b.replaceWith(i);i.focus();i.select();
+ const done=ok=>{i.onblur=null;if(ok&&i.value.trim()){m.name=i.value.trim();touch()}renderTabs();draw()};i.onkeydown=k=>{if(k.key=='Enter')done(1);else if(k.key=='Escape')done(0)};i.onblur=()=>done(1)});
+function chronicle(){const mp=maps.find(x=>x.id==cur)||{name:'Map'},F=facs.map(f=>f.n),P=marks.filter(m=>!m.pts&&!m.reg&&!m.l&&m.n).map(m=>m.n),RT=marks.filter(m=>m.pts&&m.n).map(m=>m.n);
+ if(!F.length&&P.length<2)return '';while(P.length<4)P.push(mode=='town'?sname().split(' ')[0]+' '+PK(['Square','Hall','Gate','Row']):randName());
+ const sci=mode=='planet'||mode=='space'||(mode=='town'&&ptype=='scifi'),f=()=>F.length?PK(F):'the settlers',p=()=>PK(P),two=()=>{const a=f();let b=f(),k=0;while(b==a&&F.length>1&&k++<9)b=f();return[a,b]},p2=()=>{const a=p();let b=p(),k=0;while(b==a&&k++<9)b=p();return[a,b]};
+ const dis=sci?['a reactor failure','a solar storm','a crop blight','a data plague','a hull-breach riot']:['a plague','a great flood','a fire','a long famine','an earthquake'],omen=sci?'An unexplained signal is detected near {P}; scientists still argue about its source.':'A comet hangs over {P} for forty nights; prophets proclaim the end of an age.';
+ const T=[()=>`${f()} founds ${p()}.`,()=>{const[a,b]=two();return `War breaks out between ${a} and ${b} over ${p()}.`},()=>{const[a,b]=two();return `The Treaty of ${p()} ends years of fighting between ${a} and ${b}.`},()=>`${(d=>d[0].toUpperCase()+d.slice(1))(PK(dis))} strikes ${p()}; half its people flee.`,
+  ()=>`${f()} seizes ${p()} in a daring ${sci?'orbital assault':'night raid'}.`,()=>RT.length?`Work on ${PK(RT)} is finally completed.`:`A new ${sci?'transit line':'road'} links ${p2().join(' and ')}.`,()=>omen.replace('{P}',p()),()=>`${f()} is torn by civil strife after its leader vanishes without a trace.`,
+  ()=>`Explorers sponsored by ${f()} chart ${sci?'the systems':'the lands'} beyond ${p()}.`,()=>`A marriage alliance binds ${two().join(' and ')}.`,()=>`The great library of ${p()} burns; much old knowledge is lost.`];
+ let y=sci?2150+Math.floor(Math.random()*300):80+Math.floor(Math.random()*700);const age=PK(['Second','Third','Iron','Silver','Long','Broken']),o=[`### Chronicle of ${mp.name}`,sci?'*Dates in standard years.*':`*Years are reckoned in the ${age} Age.*`,''],ord=T.map((_,i)=>i).sort(()=>Math.random()-.5);
+ // the first event is always a founding; the rest draw each kind of event at most once
+ ord.splice(ord.indexOf(0),1);ord.unshift(0);
+ for(let i=0,n=Math.min(ord.length,6+Math.floor(Math.random()*4));i<n;i++){const t=T[ord[i]]();o.push(`- **${sci?'':'Year '}${y}**: ${t}`);y+=3+Math.floor(Math.random()*55)}
+ return o.join('\n')+'\n'}
 const PP={
 fantasy:[{n:"River",c:"#4a90d9",w:4,d:[]},{n:"Road",c:"#8a5f35",w:3,d:[8,5]},{n:"Trade Route",c:"#e0b030",w:3,d:[2,6]},{n:"Sea Lane",c:"#cfe8ff",w:2,d:[3,7]}],
 planet:[{n:"River / Canal",c:"#4a90d9",w:4,d:[]},{n:"Highway",c:"#c8c0b0",w:3,d:[8,5]},{n:"Supply Line",c:"#e0b030",w:3,d:[2,6]},{n:"Pipeline",c:"#e07a30",w:3,d:[10,3]}],
@@ -634,32 +872,57 @@ function drawPath(m,hl){const T=pp()[m.t]||pp()[0],p=m.pts;ctx.lineCap='round';c
  ctx.setLineDash(T.d.map(v=>v*ms));ctx.strokeStyle=T.c;ctx.lineWidth=T.w*ms;tr();ctx.setLineDash([])}
 function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 const uid=()=>'m'+Date.now().toString(36)+Math.floor(Math.random()*1e4).toString(36),K=(host.getAttribute('storage-key')||'fmm3')+':';
-function pack(){return{mo:mode,pt:ptype,sc,w:W,h:H,t:Array.from(ter).join(''),f:Array.from(fac,v=>v.toString(36)).join(''),m:marks,fs:facs}}
-function unpack(d){applyMode(d.mo||'fantasy',d.pt);setDims(d.w,d.h);if(d.sc)sc=d.sc;scUI();ter=Uint8Array.from(d.t,c=>+c);fac=Uint8Array.from(d.f,c=>parseInt(c,36));marks=d.m||[];facs=d.fs||facs;ui();select(null)}
+function pack(){return{mo:mode,pt:ptype,sc,w:W,h:H,t:Array.from(ter).join(''),f:Array.from(fac,v=>v.toString(36)).join(''),m:marks,fs:facs,sd:seed,pa:party,nt:notes,er:era,bo:BIOMES.map(b=>[b[0],b[1]]),fg:fog.some(v=>v)?Array.from(fog).join(''):''}}
+function unpack(d){applyMode(d.mo||'fantasy',d.pt);setDims(d.w,d.h);if(d.sc)sc=d.sc;scUI();seed=d.sd;$('seed').value=d.sd!=null?d.sd:'';ter=Uint8Array.from(d.t,c=>+c);fac=Uint8Array.from(d.f,c=>parseInt(c,36));if(Array.isArray(d.bo))d.bo.forEach((o,i)=>{if(BIOMES[i]&&o){BIOMES[i][0]=String(o[0]);if(/^#[0-9a-f]{6}$/i.test(o[1]))BIOMES[i][1]=o[1]}});fog=d.fg&&d.fg.length==W*H?Uint8Array.from(d.fg,c=>+c):new Uint8Array(W*H);msel.clear();notes=d.nt||'';era=d.er||0;$('mnotes').value=notes;marks=d.m||[];party=d.pa&&Array.isArray(d.pa.trail)?d.pa:null;facs=d.fs||facs;ui();select(null)}
 function stash(){const m=maps.find(x=>x.id==cur);if(m)m.d=pack()}
 function projObj(){stash();return{name:proj,cur,maps}}
 function mkMap(name){const id=uid();maps.push({id,name,d:null,seed:{mo:mode,pt:ptype,w:W,h:H}});renderTabs();return id}
 function openMap(id,push){const m=maps.find(x=>x.id==id);if(!m||id==cur)return;stash();if(push)back.push(cur);cur=id;undos=[];redos=[];
- if(m.d)unpack(m.d);else{const sd=m.seed||{mo:'fantasy',w:96,h:60};applyMode(sd.mo,sd.pt);setDims(sd.w,sd.h);generate();ui()}renderTabs()}
-function renderTabs(){$('tabs').innerHTML=(back.length?'<button data-back="1" title="Back">←</button>':'')+maps.map(m=>`<button data-tab="${m.id}" class="${m.id==cur?'on':''}">${esc(m.name)}</button>`).join('')+'<button data-new="1" title="New map">＋</button>'}
+ if(m.d)unpack(m.d);else{notes='';era=0;$('mnotes').value='';const sd=m.seed||{mo:'fantasy',w:96,h:60};applyMode(sd.mo,sd.pt);setDims(sd.w,sd.h);generate();ui()}renderTabs()}
+function renderTabs(){$('tabs').innerHTML=(back.length?'<button data-back="1" title="Back">←</button>':'')+maps.map(m=>`<button data-tab="${m.id}" class="${m.id==cur?'on':''}" title="Double-click to rename">${esc(m.name)}</button>`).join('')+'<button data-new="1" title="New map">＋</button>'}
 function delMap(id){if(maps.length<2)return mm('A project needs at least one map.');if(id==cur)openMap(maps.find(x=>x.id!=id).id,false);maps=maps.filter(x=>x.id!=id);back=back.filter(x=>x!=id);renderTabs();mapsUI()}
 function loadProject(o){if(!o||!Array.isArray(o.maps)||!o.maps.length)throw 0;maps=o.maps;proj=o.name||'My World';cur=maps.some(m=>m.id==o.cur)?o.cur:maps[0].id;back=[];undos=[];redos=[];
- const m=maps.find(x=>x.id==cur);if(m.d)unpack(m.d);else{const sd=m.seed||{mo:'fantasy',w:96,h:60};applyMode(sd.mo,sd.pt);setDims(sd.w,sd.h);generate();ui()}renderTabs()}
+ const m=maps.find(x=>x.id==cur);if(m.d)unpack(m.d);else{notes='';era=0;$('mnotes').value='';const sd=m.seed||{mo:'fantasy',w:96,h:60};applyMode(sd.mo,sd.pt);setDims(sd.w,sd.h);generate();ui()}renderTabs()}
 function fillLink(m){const o=$('ilink');o.innerHTML='<option value="">🔗 No linked map</option>'+maps.filter(x=>x.id!=cur).map(x=>`<option value="${x.id}">↗ ${esc(x.name)}</option>`).join('')+'<option value="+">＋ New linked map…</option>';o.value=m.link&&maps.some(x=>x.id==m.link)?m.link:'';$('iopen').hidden=!o.value}
 $('ilink').onchange=e=>{const m=marks[sel];if(!m)return;let v=e.target.value;if(v=='+')v=mkMap(m.n||'Linked map');m.link=v||undefined;fillLink(m);draw()};
 $('iopen').onclick=()=>{const m=marks[sel];if(m&&m.link)openMap(m.link,true)};
-function slots(){const o=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(K)&&k!=K+'__auto')o.push(k.slice(K.length))}}catch(e){}return o.sort()}
+function slots(){const o=[];try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith(K)&&!k.startsWith(K+'__'))o.push(k.slice(K.length))}}catch(e){}return o.sort()}
 function saveSlot(n){try{localStorage.setItem(K+n,JSON.stringify(projObj()));return 1}catch(e){return 0}}
-let at=0;function touch(){clearTimeout(at);at=setTimeout(()=>{try{localStorage.setItem(K+'__auto',JSON.stringify(projObj()))}catch(e){}},1500)}
+// rolling backups: every 10 minutes the current autosave is also kept as one of three older copies
+function backup(js,force){if(js.length>1e6)return;try{const t=Date.now(),last=+localStorage.getItem(K+'__bkt')||0;if(!force&&t-last<6e5)return;for(let i=2;i>0;i--){const v=localStorage.getItem(K+'__bk'+(i-1));if(v)localStorage.setItem(K+'__bk'+i,v)}localStorage.setItem(K+'__bk0','{"t":'+t+',"p":'+js+'}');localStorage.setItem(K+'__bkt',String(t))}catch(e){}}
+let at=0;function touch(){clearTimeout(at);at=setTimeout(()=>{let ok=0;const js=JSON.stringify(projObj());try{localStorage.setItem(K+'__auto',js);ok=1;backup(js)}catch(e){try{for(let i=0;i<3;i++)localStorage.removeItem(K+'__bk'+i);localStorage.setItem(K+'__auto',js);ok=1}catch(e2){}}
+ const a=$('asv');a.textContent=ok?'✓ Autosaved':'⚠ Autosave failed';a.title=ok?'Saved in this browser at '+new Date().toLocaleTimeString():'Browser storage is full or blocked. Use Project → Save .json to keep your work.'},1500)}
 const mm=t=>{$('mmsg').textContent=t};
-function slotsUI(){$('slots').innerHTML=slots().map(n=>`<div class="frow"><span style="flex:1;align-self:center">${esc(n)}</span><button data-a="load" data-i="${esc(n)}">Load</button><button data-a="del" data-i="${esc(n)}">🗑️</button></div>`).join('')||'<i>No saved slots yet.</i>'}
-function mapsUI(){$('mlist').innerHTML=maps.map(m=>`<div class="frow"><input type="text" data-mi="${m.id}" value="${esc(m.name)}"><button data-a="goto" data-i="${m.id}">Open</button><button data-a="dm" data-i="${m.id}">🗑️</button></div>`).join('')}
+function slotsUI(){let b='';for(let i=0;i<3;i++){try{const v=localStorage.getItem(K+'__bk'+i);if(!v)continue;const o=JSON.parse(v);b+=`<div class="frow"><span style="flex:1;align-self:center;font-size:13px">${esc((o.p&&o.p.name)||'Project')} · ${new Date(o.t).toLocaleString()}</span><button data-a="bk" data-i="${i}">Restore</button></div>`}catch(e){}}$('bks').innerHTML=b||'<i style="font-size:13px">Backups appear here as you work (one every 10 minutes, last three kept).</i>';$('slots').innerHTML=slots().map(n=>`<div class="frow"><span style="flex:1;align-self:center">${esc(n)}</span><button data-a="load" data-i="${esc(n)}">Load</button><button data-a="del" data-i="${esc(n)}">🗑️</button></div>`).join('')||'<i>No saved slots yet.</i>'}
+function mapsUI(){$('mlist').innerHTML=maps.map(m=>`<div class="frow"><input type="text" data-mi="${m.id}" value="${esc(m.name)}"><button data-a="goto" data-i="${m.id}">Open</button><button data-a="dup" data-i="${m.id}" title="Duplicate this map, e.g. for a 'before and after' version">⧉</button><button data-a="dm" data-i="${m.id}">🗑️</button></div>`).join('')}
 $('qsave').onclick=()=>flash(saveSlot(proj)?`Saved "${proj}"`:'Save failed (storage unavailable)');
 $('proj').onclick=()=>{$('pname').value=proj;slotsUI();mapsUI();mm('');$('modal').hidden=false};
 function cp(el){el.select();let ok=0;try{ok=document.execCommand('copy')}catch(e){}if(ok)mm('Copied');else if(navigator.clipboard)navigator.clipboard.writeText(el.value).then(()=>mm('Copied'),()=>mm('Select the text and copy it manually.'));else mm('Select the text and copy it manually.')}
 async function dl(name,data){try{const d=window.claude&&claude.use?await claude.use('downloads'):null;if(!d){const bl=data instanceof Blob?data:new Blob([data],{type:'text/plain'}),a=document.createElement('a');a.href=URL.createObjectURL(bl);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);return mm('Saved '+name)}await d.save({filename:name,data});mm('Saved '+name)}catch(e){mm(e&&e.code=='declined'?'Save cancelled.':'Could not save the file. Use Copy instead.')}}
-async function render(){const v=view,sl=sel;view={z:1,x:0,y:0};sel=null;draw();$('pimg').src=cv.toDataURL();$('pimg').hidden=false;const bl=await new Promise(r=>cv.toBlob(r));view=v;sel=sl;draw();return bl}
-function loreMap(){const mp=maps.find(x=>x.id==cur),tot=W*H,cnt={},o=[`## ${mp.name}`,`*${M.n.replace(/^\S+\s/,'')} map, ${W}×${H} cells.*`,''];
+let pimgURL='';
+async function render(){const k=Math.max(1,Math.min(+$('pscale').value||1,8192/(W*S),8192/(H*S))),v=view,sl=sel;rend=1;hd=k;sel=null;
+ try{cv.width=Math.round(W*S*k);cv.height=Math.round(H*S*k);view={z:k,x:0,y:0};drawNow();const bl=await new Promise(r=>cv.toBlob(r));
+  if(pimgURL)URL.revokeObjectURL(pimgURL);pimgURL=URL.createObjectURL(bl);$('pimg').src=pimgURL;$('pimg').hidden=false;mm(`Rendered ${cv.width}×${cv.height} px.`);return bl}
+ finally{rend=0;hd=1;cv.width=W*S;cv.height=H*S;view=v;sel=sl;drawNow()}}
+// stand-alone viewer: the rendered map plus invisible hotspots; all text is inserted with textContent
+// M: [{id,name,url,pins:[{x,y,i,n,d,l}]}]; pins whose l names another exported map get an "Open" button
+function webPage(proj,M){const J=JSON.stringify(M).replace(/</g,'\\u003c'),T=esc(proj+(M.length==1?' · '+M[0].name:''));
+ return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${T}</title><style>
+body{margin:0;background:#14110c;color:#eadfc6;font:15px/1.45 Georgia,serif}h1{font-size:20px;margin:12px 16px;color:#d49a5a}#w{position:relative;margin:0 16px;max-width:1400px}#w img{display:block;width:100%;border-radius:8px}
+.h{position:absolute;width:3.2%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;cursor:pointer;background:transparent;border:0;padding:0}.h:hover,.h:focus{outline:2px solid #ffd24a;background:rgba(255,210,74,.15)}
+#p{margin:12px 16px;max-width:1400px;background:#2a241a;border:1px solid #4a3f2c;border-radius:8px;padding:12px;min-height:3em;white-space:pre-wrap}#p b{font-size:17px;color:#ffe9a8}#q{padding:6px 8px;width:min(320px,100%);background:#1c1812;color:inherit;border:1px solid #4a3f2c;border-radius:6px;font:inherit}
+#bar{display:flex;flex-wrap:wrap;gap:6px;margin:0 16px 8px;align-items:center}#bar button,#p button{font:inherit;color:inherit;background:#2a241a;border:1px solid #4a3f2c;border-radius:6px;padding:5px 10px;cursor:pointer}#bar button.on{outline:2px solid #d49a5a}#p button{display:block;margin-top:10px}
+</style></head><body><h1>${T}</h1><div id="bar"><span id="tabs" style="display:contents"></span><input id="q" placeholder="🔎 Find a place…" list="ql"></div><datalist id="ql"></datalist><div id="w"><img alt=""></div><div id="p">Click a place on the map to read about it.</div><script>
+const M=${J},w=document.getElementById('w'),p=document.getElementById('p'),ql=document.getElementById('ql'),img=w.querySelector('img'),tabs=document.getElementById('tabs');let cur=0;
+function show(o){p.textContent='';const b=document.createElement('b');b.textContent=o.i+' '+(o.n||'Unnamed');p.append(b,document.createTextNode(o.d?'\\n\\n'+o.d:''));const k=M.findIndex(m=>m.id==o.l);if(k>=0){const g=document.createElement('button');g.textContent='↗ Open '+M[k].name;g.onclick=()=>go(k);p.append(g)}p.scrollIntoView({block:'nearest'})}
+function go(k){cur=k;const m=M[k];img.src=m.url;img.alt=m.name;w.querySelectorAll('.h').forEach(h=>h.remove());m.pins.forEach(o=>{const h=document.createElement('button');h.className='h';h.style.left=o.x+'%';h.style.top=o.y+'%';h.title=o.n;h.setAttribute('aria-label',o.n||'Place');h.onclick=()=>show(o);w.append(h)});
+ tabs.textContent='';if(M.length>1)M.forEach((x,i)=>{const b=document.createElement('button');b.textContent=x.name;b.className=i==k?'on':'';b.onclick=()=>go(i);tabs.append(b)});p.textContent='Click a place on the map to read about it.'}
+const all=[];M.forEach((m,k)=>m.pins.forEach(o=>{if(o.n){all.push([k,o]);const op=document.createElement('option');op.value=M.length>1?o.n+' — '+m.name:o.n;ql.append(op)}}));
+document.getElementById('q').onchange=e=>{const v=e.target.value.toLowerCase().split(' — ')[0];const f=all.find(([k,o])=>o.n.toLowerCase()==v)||all.find(([k,o])=>o.n.toLowerCase().includes(v));if(f){if(f[0]!=cur)go(f[0]);show(f[1])}};go(0);
+<\/script></body></html>`}
+async function webMap(){const bl=await render(),url=await new Promise(r=>{const fr=new FileReader();fr.onload=()=>r(fr.result);fr.readAsDataURL(bl)}),mp=maps.find(x=>x.id==cur)||{name:'Map'};
+ return{id:cur,name:mp.name,url,pins:marks.filter(m=>(m.n||(m.d&&!m.pts))&&!hidP(m)&&!m.l).map(m=>({x:+(m.x/(W*S)*100).toFixed(3),y:+(m.y/(H*S)*100).toFixed(3),i:m.pts?'〰️':m.reg?(m.i||'🏷️'):m.i||'📍',n:m.n||'',d:m.d||'',l:m.link||''}))}}
+function loreMap(){const mp=maps.find(x=>x.id==cur),tot=W*H,cnt={},o=[`## ${mp.name}`,`*${M.n.replace(/^\S+\s/,'')} map, ${W}×${H} cells.*`,''];if(notes.trim())o.push('### Notes',notes.trim(),'');if(party&&party.log&&party.log.length){let dd=0;o.push('### Journey log');party.log.forEach((l,i)=>{dd+=l.days;o.push(`${i+1}. ${l.from} → ${l.to}: ${l.d} ${sc.u}${l.days?`, ${l.days} day${l.days==1?'':'s'} (day ${Math.ceil(dd)})`:''}`)});o.push('')}
  for(const v of fac)if(v)cnt[v]=(cnt[v]||0)+1;
  const at=m=>fac[Math.min(H-1,m.y/S|0)*W+Math.min(W-1,m.x/S|0)],pins=marks.filter(m=>!m.pts&&!m.l&&!m.reg),ps=marks.filter(m=>m.pts),rg=marks.filter(m=>m.reg),ls=marks.filter(m=>m.l&&m.n);
  const rl=f=>REL.slice(1).map(r=>{const n=Object.keys(f.rel||{}).filter(j=>f.rel[j]==r&&facs[j]).map(j=>facs[j].n);return n.length?`${r}: ${n.join(', ')}`:''}).filter(Boolean);
@@ -674,53 +937,112 @@ let np=0;
 $('modal').onclick=async e=>{if(e.target.id=='modal'){$('modal').hidden=true;return}const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,id=b.dataset.i;
  if(a=='close')$('modal').hidden=true;
  else if(a=='save'){proj=$('pname').value.trim()||'My World';mm(saveSlot(proj)?`Saved "${proj}".`:'Could not save (storage unavailable or full).');slotsUI()}
+ else if(a=='bk'){try{const o=JSON.parse(localStorage.getItem(K+'__bk'+id));backup(JSON.stringify(projObj()),1);loadProject(o.p);$('pname').value=proj;slotsUI();mapsUI();mm('Restored the backup from '+new Date(o.t).toLocaleString()+'. What you had before is now the newest backup.')}catch(x){mm('Could not restore that backup.')}}
  else if(a=='load'){try{loadProject(JSON.parse(localStorage.getItem(K+id)));$('modal').hidden=true}catch(x){mm('Could not load that slot.')}}
  else if(a=='del'){try{localStorage.removeItem(K+id)}catch(x){}slotsUI()}
  else if(a=='goto'){openMap(id,false);$('modal').hidden=true}
  else if(a=='dm')delMap(id);
+ else if(a=='dup'){stash();const m=maps.find(x=>x.id==id);if(m){const c={id:uid(),name:m.name+' (copy)',d:m.d?JSON.parse(JSON.stringify(m.d)):null,seed:m.seed};maps.splice(maps.indexOf(m)+1,0,c);renderTabs();mapsUI();touch();mm(`Duplicated "${m.name}". Links from other maps still point at the original.`)}}
  else if(a=='exp'){$('jtxt').value=JSON.stringify(projObj());mm('Copy this, or use Save .json.')}
  else if(a=='copy')cp($('jtxt'));
  else if(a=='expdl'){if(!$('jtxt').value)$('jtxt').value=JSON.stringify(projObj());await dl(proj+'.json',$('jtxt').value)}
  else if(a=='imp'){try{loadProject(JSON.parse($('jtxt').value));mm('Imported.');mapsUI()}catch(x){mm('That is not a valid project JSON.')}}
+ else if(a=='openf')$('jfile').click();
  else if(a=='csv'){$('jtxt').value=csvAll();mm('CSV is in the box. Copy it or use Save .csv.')}
  else if(a=='csvdl'){const t=csvAll();$('jtxt').value=t;await dl(proj+'-pins.csv',t)}
  else if(a=='lore')$('ltxt').value=lore();
+ else if(a=='chron'){const c=chronicle();if(!c)mm('Add some factions or named places first.');else{const t=$('ltxt');t.value=(t.value?t.value.trimEnd()+'\n\n':'')+c;t.scrollTop=t.scrollHeight;mm('Chronicle added. Edit it freely; click again for a different history.')}}
  else if(a=='lcopy')cp($('ltxt'));
  else if(a=='ldl'){if(!$('ltxt').value)$('ltxt').value=lore();await dl(proj+'-lore.md',$('ltxt').value)}
  else if(a=='png')await render();
+ else if(a=='hand'){const o={w:vis.w,y:vis.y};vis.w=1;vis.y=1;try{const bl=await render();await dl(proj+'-'+((maps.find(x=>x.id==cur)||{}).name||'map')+'-handout.png',bl)}finally{Object.assign(vis,o);ui();draw()}}
+ else if(a=='web'||a=='webp'){const o={w:vis.w,y:vis.y};vis.w=1;vis.y=1;mm('Rendering…');try{let M;if(a=='web')M=[await webMap()];else{const c0=cur,u=undos,u2=redos;stash();M=[];for(const id of maps.map(x=>x.id)){openMap(id,false);M.push(await webMap())}openMap(c0,false);undos=u;redos=u2}
+   const nm=a=='web'?proj+'-'+M[0].name:proj+'-world';await dl(nm+'.html',new Blob([webPage(proj,M)],{type:'text/html'}))}finally{Object.assign(vis,o);ui();draw()}}
  else if(a=='pngdl'){const bl=await render();await dl(proj+'-'+(maps.find(x=>x.id==cur)||{}).name+'.png',bl)}
  else if(a=='newproj'){if(!np){np=1;b.textContent='Click again to confirm (unsaved work is lost)';setTimeout(()=>{np=0;b.textContent='🆕 New project'},3500);return}np=0;b.textContent='🆕 New project';
   maps=[{id:'m0',name:'World Map',d:null}];cur='m0';proj='My World';back=[];undos=[];redos=[];applyMode('fantasy');setDims(96,60);generate();renderTabs();$('pname').value=proj;slotsUI();mapsUI();mm('Started a new project.')}};
+function openFile(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{loadProject(JSON.parse(r.result));$('pname').value=proj;mapsUI();mm('Opened '+f.name+'.');flash('Opened '+f.name+'.')}catch(x){mm('That file is not a valid project JSON.');flash('That file is not a valid project JSON.')}};r.readAsText(f)}
+$('jfile').onchange=e=>{openFile(e.target.files[0]);e.target.value=''};
+app.addEventListener('dragover',e=>{if(e.dataTransfer&&[...e.dataTransfer.types].includes('Files'))e.preventDefault()});
+app.addEventListener('drop',e=>{const f=e.dataTransfer&&e.dataTransfer.files[0];if(!f)return;e.preventDefault();if(/\.json$/i.test(f.name)||f.type=='application/json')openFile(f);else flash('Drop a project .json file to open it.')});
 $('modal').addEventListener('input',e=>{const id=e.target.dataset.mi;if(!id)return;const m=maps.find(x=>x.id==id);if(m){m.name=e.target.value||'Map';renderTabs();touch()}});
-const HK={pan:'v',biome:'b',erase:'e',fill:'g',mark:'m',label:'t',path:'p',faction:'f',unfac:'x',region:'d',building:'u',measure:'r',survey:'s'};
+const HK={pan:'v',biome:'b',erase:'e',fill:'g',mark:'m',label:'t',path:'p',faction:'f',unfac:'x',region:'d',building:'u',measure:'r',survey:'s',route:'a',fog:'h',unfog:'j',party:'k'};
 root.addEventListener('keydown',e=>{const inp=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName);
- if(e.key=='Escape'){$('modal').hidden=true;$('fmodal').hidden=true;if(!inp)select(null);return}
+ if(e.key=='Escape'){$('modal').hidden=true;$('fmodal').hidden=true;$('ctx').hidden=true;if(rt){rt=null;draw()}if(msel.size){msel.clear();draw()}if(!inp)select(null);return}
  if(inp||!$('modal').hidden||!$('fmodal').hidden)return;
  const k=e.key.toLowerCase(),c=e.ctrlKey||e.metaKey;
  if(c&&k=='z'){e.preventDefault();(e.shiftKey?$('redo'):$('undo')).click();return}
  if(c&&k=='y'){e.preventDefault();$('redo').click();return}
+ if(c&&k=='d'){e.preventDefault();dupSel();return}
+ if(c&&k=='f'){e.preventDefault();$('find').focus();return}
+ if(!c&&e.key==' '){e.preventDefault();if(!spc){spc=1;$('bcur').hidden=true;cv.style.cursor='grab'}return}
+ if(!c&&e.key=='?'){openHelp();return}
+ if(!c&&k.startsWith('arrow')){e.preventDefault();const dx=k=='arrowleft'?-1:k=='arrowright'?1:0,dy=k=='arrowup'?-1:k=='arrowdown'?1:0,m=marks[sel];
+  if(msel.size){const st=e.shiftKey?S*2:S/2,now=Date.now();if(now-(nudgeT||0)>1200)snap();nudgeT=now;for(const q of msel){if(q.pts)for(const p of q.pts){p[0]+=dx*st;p[1]+=dy*st}q.x+=dx*st;q.y+=dy*st}draw();return}
+  if(m&&!m.reg){const st=e.shiftKey?S*2:S/2,now=Date.now();if(now-(nudgeT||0)>1200)snap();nudgeT=now;if(m.pts){for(const p of m.pts){p[0]+=dx*st;p[1]+=dy*st}}m.x+=dx*st;m.y+=dy*st;select(sel)}
+  else{const st=cv.width*.1;view.x-=dx*st;view.y-=dy*st;clampView();draw()}return}
  if(c)return;
- if(k=='delete'||k=='backspace'){if(marks[sel]){snap();marks.splice(sel,1);select(null)}return}
+ if(k=='delete'||k=='backspace'){if(msel.size){snap();const n=msel.size;marks=marks.filter(m=>!msel.has(m));msel.clear();select(null);flash(`Deleted ${n} items. Undo brings them back.`);return}if(marks[sel]){snap();marks.splice(sel,1);select(null)}return}
  if(k=='+'||k=='='){$('zin').click();return}if(k=='-'){$('zout').click();return}if(k=='0'){$('zreset').click();return}
+ const VK={y:'y',l:'leg',n:'n',o:'o',w:'w'};if(VK[k]){if(k=='l')$('leg').click();else{vis[VK[k]]=!vis[VK[k]];ui();draw();flash({y:'👁️ Player view',n:'🔤 Names',o:'🗺️ Minimap',w:'☁️ Fog of war'}[k]+(vis[VK[k]]?' on':' off'),1200)}return}
  const t=Object.keys(HK).find(n=>HK[n]==k);if(t){tool=t;ui()}});
-function flash(t){$('hint').textContent=t;setTimeout(()=>$('hint').textContent=HINT,1500)}
-const HINT='✋ Pan/Inspect: drag to move the map, click a pin for details. Scroll wheel or ➕➖ to zoom. Paint tools: click or drag. Path tool: drag to draw rivers, roads and lanes. Drag a pin to move it; pinch to zoom on touch screens. 🏷️ District: click an area to name and describe it.';
+root.addEventListener('keyup',e=>{if(e.key==' '&&spc){spc=0;if(!pan)cv.style.cursor=tool=='pan'?'grab':'crosshair'}});
+app.addEventListener('blur',()=>{spc=0},true);
+function dupSel(){if(msel.size){snap();const c=[...msel].map(m=>{const q=JSON.parse(JSON.stringify(m));if(q.pts)for(const p of q.pts){p[0]+=S;p[1]+=S}q.x+=S;q.y+=S;return q});marks.push(...c);msel.clear();c.forEach(q=>msel.add(q));select(null);return flash(`Duplicated ${c.length} items; the copies are now selected.`)}const m=marks[sel];if(!m||m.reg)return flash('Select a pin, label or path to duplicate it.');snap();const c=JSON.parse(JSON.stringify(m));
+ if(c.pts)for(const p of c.pts){p[0]+=S;p[1]+=S}c.x+=S;c.y+=S;if(c.n)c.n+=' (copy)';marks.push(c);select(marks.length-1);flash('Duplicated. Drag it into place or nudge it with the arrow keys.')}
+function openHelp(){const row=(k,t)=>`<div class="frow" style="align-items:center"><kbd style="min-width:70px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 6px;font:12px monospace;background:var(--panel)">${k}</kbd><span style="flex:1">${t}</span></div>`;
+ $('fbox').innerHTML=`<div class="ihead"><b style="flex:1;font-size:16px">⌨️ Keyboard shortcuts</b><button data-fa="1">✕</button></div><h2>Tools</h2>`+TOOLS.filter(t=>HK[t[0]]).map(t=>row(HK[t[0]].toUpperCase(),t[1])).join('')+
+ '<h2>Editing</h2>'+[['Ctrl+Z','Undo'],['Ctrl+Y / Ctrl+Shift+Z','Redo'],['Ctrl+D','Duplicate the selected pin, label or path (or the whole selection)'],['Shift + drag','Box-select pins, labels and paths (Pan tool); then drag, nudge or Delete them together'],['Delete','Delete the selected item'],['Arrow keys','Nudge the selected item (Shift = bigger steps)'],['Shift + click','Paint a straight line from the last painted point'],['Alt + click','Pick up the biome or faction under the cursor (paint tools)'],['Shift + drag','Measure tool: add another leg to the measurement'],['Right-click','Quick actions: add pin or label, move party, route, encounter, weather'],['Esc','Deselect, cancel a route, close windows']].map(r=>row(...r)).join('')+
+ '<h2>View</h2>'+[['Space + drag','Pan with any tool'],['Arrow keys','Pan when nothing is selected'],['+ / −','Zoom in / out'],['0','Fit the whole map'],['Ctrl+F','Find a place by name'],['Y / W','Toggle player view / fog of war'],['L / N / O','Toggle legend / names / minimap'],['?','Show this list']].map(r=>row(...r)).join('');$('fmodal').hidden=false}
+let ft=0;function flash(t,ms){$('hint').textContent=t;clearTimeout(ft);ft=setTimeout(()=>$('hint').textContent=HINT,ms||2600)}
+const HINT='✋ Pan/Inspect: drag to move the map, click a pin for details. Scroll wheel or ➕➖ to zoom. Paint tools: click or drag. Path tool: drag to draw rivers, roads and lanes. Drag a pin to move it, or drag a path to bend it (brush size sets how much bends); pinch to zoom on touch screens. 🏷️ District: click an area to name and describe it. 🧭 Auto route: click two places and a path is laid along the easiest ground. Hold Space to pan with any tool. Press ? for all keyboard shortcuts.';
 function pos(e){const r=cv.getBoundingClientRect(),k=cv.width/r.width;return[((e.clientX-r.left)*k-view.x)/view.z,((e.clientY-r.top)*k-view.y)/view.z]}
-function brush(px,py){const R=+$('size').value,cx=px/S|0,cy=py/S|0;
+let lastP=null;
+function brushLine(a,b,x,y){const n=Math.ceil(Math.hypot(x-a,y-b)/(S*.6))+1;for(let k=1;k<=n;k++)brush(a+(x-a)*k/n,b+(y-b)*k/n)}
+function brush(px,py){lastP=[px,py];const R=+$('size').value,cx=px/S|0,cy=py/S|0,sc8=$('scat').checked,pm=$('pmask').value||'a';
  for(let y=cy-R;y<=cy+R;y++)for(let x=cx-R;x<=cx+R;x++){if(x<0||y<0||x>=W||y>=H)continue;
-  if(Math.hypot(x-cx,y-cy)>R-.3+(hash(x,y)*.8))continue;const i=y*W+x;
-  if(tool=='biome')ter[i]=biome;else if(tool=='erase')ter[i]=0;else if(tool=='faction')fac[i]=fsel;else if(tool=='unfac')fac[i]=0}}
+  if(Math.hypot(x-cx,y-cy)>R-.3+(hash(x,y)*.8)||(sc8&&Math.random()<.55))continue;const i=y*W+x;if(pm!=='a'&&(pm=='l'?!ter[i]:pm=='w'?ter[i]:ter[i]!=+pm))continue;
+  if(tool=='biome')ter[i]=biome;else if(tool=='erase')ter[i]=0;else if(tool=='faction')fac[i]=fsel;else if(tool=='unfac')fac[i]=0;else if(tool=='fog')fog[i]=1;else if(tool=='unfog')fog[i]=0}}
 let pan=null;const ptr=new Map();let pinch=null;function cpos(e){const r=cv.getBoundingClientRect(),k=cv.width/r.width;return[(e.clientX-r.left)*k,(e.clientY-r.top)*k]}
-function hit(x,y){let b=-1,bd=24*ms/view.z;marks.forEach((m,i)=>{if(m.pts||m.reg)return;const d=Math.hypot(m.x-x,m.y-y);if(d<bd){bd=d;b=i}});if(b>=0)return b;bd=12*ms/view.z;
- marks.forEach((m,i)=>{if(!m.pts)return;const d=pdist(m.pts,x,y);if(d<bd){bd=d;b=i}});return b}
+function hit(x,y){let b=-1,bd=24*ms/view.z;marks.forEach((m,i)=>{if(m.pts||m.reg||hidP(m))return;const d=Math.hypot(m.x-x,m.y-y);if(d<bd){bd=d;b=i}});if(b>=0)return b;bd=12*ms/view.z;
+ marks.forEach((m,i)=>{if(!m.pts||(vis.y&&m.gm))return;const d=pdist(m.pts,x,y);if(d<bd){bd=d;b=i}});return b}
 function pdist(P,x,y){let r=1e9;for(let i=1;i<P.length;i++){const ax=P[i-1][0],ay=P[i-1][1],dx=P[i][0]-ax,dy=P[i][1]-ay,t=Math.max(0,Math.min(1,((x-ax)*dx+(y-ay)*dy)/(dx*dx+dy*dy||1)));r=Math.min(r,Math.hypot(x-ax-t*dx,y-ay-t*dy))}return r}
 function plen(m){return Math.round(m.pts.reduce((s,p,i)=>i?s+Math.hypot(p[0]-m.pts[i-1][0],p[1]-m.pts[i-1][1]):0,0)/S)}
 function finishPath(){const p=dr;dr=null;if(p.pts.length<2){marks.splice(marks.indexOf(p),1);draw();return}const q=p.pts[p.pts.length>>1];p.x=q[0];p.y=q[1];select(marks.indexOf(p))}
-cv.addEventListener('pointerleave',()=>{$('tip').hidden=true});
-cv.addEventListener('pointerdown',e=>{$('tip').hidden=true;cv.setPointerCapture(e.pointerId);ptr.set(e.pointerId,cpos(e));if(ptr.size==2){if(dr)finishPath();painting=false;pan=null;mv=null;if(meas)meas.live=0;const[a,b]=[...ptr.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z:view.z,m:[(a[0]+b[0])/2,(a[1]+b[1])/2]};return}const[x,y]=pos(e);
- if(tool=='pan'||e.button==1){const h=hit(x,y);if(h>=0&&e.button!=1){select(h);if(!marks[h].pts)mv={i:h,dx:marks[h].x-x,dy:marks[h].y-y,moved:0};return}pan={sx:e.clientX,sy:e.clientY,ox:view.x,oy:view.y,moved:0,rg:e.button==1?-1:hitReg(x,y)};cv.style.cursor='grabbing';return}
- if(tool=='measure'){meas={a:[x,y],b:[x,y],live:1};draw();return}
+function bcur(e){const b=$('bcur');if(!PAINT.has(tool)||e.pointerType!='mouse'||mmd!=null||inMini(cpos(e))){b.hidden=true;return}
+ const r=cv.getBoundingClientRect(),wr=$('wrap'),q=wr.getBoundingClientRect(),k=r.width/cv.width,[x,y]=pos(e),d=(2*+$('size').value+.6)*S*view.z*k,
+ cx=(((x/S|0)+.5)*S*view.z+view.x)*k+r.left-q.left-wr.clientLeft+wr.scrollLeft,cy=(((y/S|0)+.5)*S*view.z+view.y)*k+r.top-q.top-wr.clientTop+wr.scrollTop;
+ Object.assign(b.style,{width:d+'px',height:d+'px',left:cx-d/2+'px',top:cy-d/2+'px'});b.hidden=false}
+const inMini=p=>!!mini&&p[0]>=mini[0]&&p[0]<=mini[0]+mini[2]&&p[1]>=mini[1]&&p[1]<=mini[1]+mini[3];
+function miniGo(p){const wx=(p[0]-mini[0])/mini[2]*cv.width,wy=(p[1]-mini[1])/mini[3]*cv.height;view.x=cv.width/2-wx*view.z;view.y=cv.height/2-wy*view.z;clampView();draw()}
+function stat(e){const[x,y]=pos(e),cx=x/S|0,cy=y/S|0;if(cx<0||cy<0||cx>=W||cy>=H){$('stat').textContent='';return}const i=cy*W+cx;
+ if(vis.y&&fogAt(x,y)){$('stat').textContent='☁️ Unexplored';return}const f=fac[i]&&facs[fac[i]-1],g=gsz*S,hr=g/Math.sqrt(3),hc=Math.round(x/(1.5*hr)),hq=Math.round((y-(hc%2)*g/2)/g),ref=grid==2?'hex '+String(hc+1).padStart(2,'0')+String(hq+1).padStart(2,'0'):colName(Math.floor(cx/gsz))+(Math.floor(cy/gsz)+1);
+ $('stat').textContent=`📍 ${ref} · cell ${cx},${cy} · ${(BIOMES[ter[i]]||['?'])[0]}${f?' · 🚩 '+f.n:''}${vis.w&&fog[i]?' · ☁️ fogged':''}`}
+// right-click menu with quick actions at the clicked spot
+let cxp=null;cv.addEventListener('contextmenu',e=>{e.preventDefault();cxp=pos(e);const h=hit(cxp[0],cxp[1]),m=h>=0?marks[h]:null,c=$('ctx'),A=[['pin','📍 Add pin (random name)'],['label','🔤 Add label here'],['party',party?'🧙 Move party here':'🧙 Place party here'],['route','🧭 Route from here…'],['enc','🎲 Encounter here'],['wx','🌦️ Weather here'],['info','🔍 What is here?']];
+ if(m)A.unshift(['edit','✏️ Edit '+(m.n||'this item')]);c.innerHTML=A.map(a=>`<button data-cx="${a[0]}">${esc(a[1])}</button>`).join('');c.hidden=false;const r=c.getBoundingClientRect();c.style.left=Math.min(e.clientX,innerWidth-r.width-8)+'px';c.style.top=Math.min(e.clientY,innerHeight-r.height-8)+'px';c.dataset.h=h});
+$('ctx').addEventListener('click',e=>{const b=e.target.closest('[data-cx]');$('ctx').hidden=true;if(!b||!cxp)return;const[x,y]=cxp,a=b.dataset.cx,fake={x,y,i:MARKS[mark]};
+ if(a=='edit')select(+$('ctx').dataset.h);
+ else if(a=='pin'){snap();marks.push({x,y,i:MARKS[mark],n:randName(),l:false,d:''});select(marks.length-1)}
+ else if(a=='label'){snap();marks.push({x,y,i:'',n:randName(),l:true,d:''});select(marks.length-1)}
+ else if(a=='party')moveParty(x,y);
+ else if(a=='route'){tool='route';ui();rt={a:[x,y],b:[x,y]};flash('Route start set. Click the destination (Esc cancels).');draw()}
+ else if(a=='enc')flash(encounter(fake),8000);
+ else if(a=='wx')flash(weather(fake),7000);
+ else if(a=='info')flash(landText(fake)+nearText(fake),9000)});
+root.addEventListener('pointerdown',e=>{if(!e.target.closest('#ctx'))$('ctx').hidden=true},true);
+cv.addEventListener('pointerleave',()=>{$('tip').hidden=true;$('bcur').hidden=true;$('stat').textContent=''});
+cv.addEventListener('pointerdown',e=>{if(e.button==2)return;$('tip').hidden=true;try{cv.setPointerCapture(e.pointerId)}catch(x){}if(ptr.size==0&&inMini(cpos(e))){mmd=e.pointerId;$('bcur').hidden=true;miniGo(cpos(e));return}ptr.set(e.pointerId,cpos(e));if(ptr.size==2){if(dr)finishPath();painting=false;pan=null;mv=null;pd=null;if(meas)meas.live=0;const[a,b]=[...ptr.values()];pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1])||1,z:view.z,m:[(a[0]+b[0])/2,(a[1]+b[1])/2]};return}const[x,y]=pos(e);
+ if(tool=='pan'&&e.shiftKey&&!spc&&e.button!=1){box={a:[x,y],b:[x,y]};return}
+ if(tool=='pan'||e.button==1||spc){const h=spc?-1:hit(x,y);
+  if(h>=0&&e.button!=1&&msel.size>1&&msel.has(marks[h])){gmv={a:[x,y],o:[...msel].map(m=>[m,m.x,m.y,m.pts?m.pts.map(q=>q.slice()):null]),moved:0};return}
+  if(e.button!=1&&!spc&&msel.size){msel.clear();draw()}
+  if(h>=0&&e.button!=1){select(h);if(!marks[h].pts)mv={i:h,dx:marks[h].x-x,dy:marks[h].y-y,moved:0};else pd={i:h,a:[x,y],o:marks[h].pts.map(p=>p.slice()),moved:0};return}pan={sx:e.clientX,sy:e.clientY,ox:view.x,oy:view.y,moved:0,rg:e.button==1||spc?-1:hitReg(x,y)};cv.style.cursor='grabbing';return}
+ if(tool=='measure'){if(e.shiftKey&&meas&&!meas.live){meas.legs=(meas.legs||[]).concat([[meas.a,meas.b]]);meas.a=meas.b;meas.b=[x,y];meas.live=1}else meas={a:[x,y],b:[x,y],live:1,legs:[]};draw();return}
+ if(tool=='party'){moveParty(x,y);return}
+ if(tool=='route'){const h=hit(x,y),p=h>=0&&!marks[h].pts&&!marks[h].reg?[marks[h].x,marks[h].y]:[x,y];if(!rt){rt={a:p,b:p};flash('Route start set. Now click the destination (Esc cancels).');draw()}else{const a=rt.a;rt=null;autoRoute(a,p)}return}
  if(tool=='survey'){sv={a:[x,y],b:[x,y],live:1};$('sumc').hidden=true;draw();return}
+ if(e.altKey&&PAINT.has(tool)&&tool!='fog'&&tool!='unfog'){const i=Math.min(H-1,Math.max(0,y/S|0))*W+Math.min(W-1,Math.max(0,x/S|0));if(tool=='biome'||tool=='erase'){biome=ter[i];tool='biome';flash('Picked '+BIOMES[biome][0],1200)}else if(fac[i]){fsel=fac[i];tool='faction';flash('Picked '+facs[fsel-1].n,1200)}ui();return}
  snap();
  if(tool=='fill'){flood(x,y);draw();return}
  if(tool=='region'){defRegion(x,y);return}
@@ -728,20 +1050,30 @@ cv.addEventListener('pointerdown',e=>{$('tip').hidden=true;cv.setPointerCapture(
  if(tool=='path'){dr={pts:[[x,y]],t:ptp,n:$('name').value.trim(),d:'',x,y,i:'',l:false};$('name').value='';marks.push(dr);draw();return}
  if(tool=='mark'||tool=='label'){marks.push({x,y,i:tool=='mark'?MARKS[mark]:'',n:$('name').value.trim(),l:tool=='label',d:''});$('name').value='';select(marks.length-1);return}
  if(tool=='remove'){let h=hit(x,y);if(h<0)h=hitReg(x,y);if(h>=0){marks.splice(h,1);select(null)}return}
- painting=true;brush(x,y);draw()});
+ if((tool=='fog'||tool=='unfog')&&!vis.w){vis.w=1;ui()}
+ painting=true;if(e.shiftKey&&lastP){const[a,b]=lastP;brush(a,b);brushLine(a,b,x,y)}else brush(x,y);draw()});
 cv.addEventListener('pointermove',e=>{
- if(e.pointerType=='mouse'&&!e.buttons){hover(e);return}
+ if(mmd===e.pointerId){miniGo(cpos(e));return}
+ bcur(e);if(rt&&tool=='route'&&!pinch){rt.b=pos(e);draw()}if(e.pointerType=='mouse'&&!e.buttons){if(inMini(cpos(e))){$('tip').hidden=true;cv.style.cursor='pointer';return}cv.style.cursor=tool=='pan'?'grab':'crosshair';hover(e);stat(e);return}
  if(ptr.has(e.pointerId))ptr.set(e.pointerId,cpos(e));
  if(pinch&&ptr.size>=2){const[a,b]=[...ptr.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]),m=[(a[0]+b[0])/2,(a[1]+b[1])/2];zoomAt(Math.max(1,Math.min(10,pinch.z*d/pinch.d))/view.z,m[0],m[1]);view.x+=m[0]-pinch.m[0];view.y+=m[1]-pinch.m[1];clampView();pinch.m=m;draw();return}
  if(pinch)return;
+ // dragging a path bends it: points near the grab move most, with the brush size setting the reach
+ if(box){box.b=pos(e);draw();return}
+ if(gmv){const[x,y]=pos(e),dx=x-gmv.a[0],dy=y-gmv.a[1];if(!gmv.moved){if(Math.hypot(dx,dy)<4/view.z)return;snap();gmv.moved=1}for(const[m,ox,oy,P]of gmv.o){m.x=ox+dx;m.y=oy+dy;if(P)m.pts=P.map(q=>[q[0]+dx,q[1]+dy])}draw();return}
+ if(pd){const[x,y]=pos(e),m=marks[pd.i];if(!m||!m.pts)return;const dx=x-pd.a[0],dy=y-pd.a[1];if(!pd.moved){if(Math.hypot(dx,dy)<4/view.z)return;snap();pd.moved=1}
+  const Rr=(+$('size').value+2)*S;m.pts=pd.o.map(p=>{const w=Math.exp(-((p[0]-pd.a[0])**2+(p[1]-pd.a[1])**2)/(Rr*Rr));return[Math.max(0,Math.min(W*S,p[0]+dx*w)),Math.max(0,Math.min(H*S,p[1]+dy*w))]});draw();return}
  if(mv){const[x,y]=pos(e),m=marks[mv.i];if(!m)return;if(!mv.moved){if(Math.hypot(x+mv.dx-m.x,y+mv.dy-m.y)<4/view.z)return;snap();mv.moved=1}m.x=Math.max(0,Math.min(W*S,x+mv.dx));m.y=Math.max(0,Math.min(H*S,y+mv.dy));draw();return}
  if(sv&&sv.live){sv.b=pos(e);draw();return}
  if(bd){bd.b=pos(e);draw();return}
  if(meas&&meas.live){meas.b=pos(e);draw();return}
  if(dr){const[x,y]=pos(e),l=dr.pts[dr.pts.length-1];if(Math.hypot(x-l[0],y-l[1])>5/view.z){dr.pts.push([x,y]);draw()}return}
  if(pan){if(Math.hypot(e.clientX-pan.sx,e.clientY-pan.sy)>4)pan.moved=1;const r=cv.getBoundingClientRect(),k=cv.width/r.width;view.x=pan.ox+(e.clientX-pan.sx)*k;view.y=pan.oy+(e.clientY-pan.sy)*k;clampView();draw();return}
- if(!painting)return;const[x,y]=pos(e);brush(x,y);draw()});
-const up=e=>{ptr.delete(e.pointerId);if(sv&&sv.live){sv.live=0;surveyShow()}if(bd)finishBld();if(ptr.size<2)pinch=null;if(mv&&mv.moved)select(mv.i);mv=null;if(meas)meas.live=0;if(dr)finishPath();painting=false;if(pan&&pan.rg>=0&&!pan.moved)select(pan.rg);pan=null;if(tool=='pan')cv.style.cursor='grab'};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+ if(!painting)return;const[x,y]=pos(e);if(lastP)brushLine(lastP[0],lastP[1],x,y);else brush(x,y);draw()});
+const up=e=>{if(mmd===e.pointerId){mmd=null;return}
+ if(box){const x0=Math.min(box.a[0],box.b[0]),x1=Math.max(box.a[0],box.b[0]),y0=Math.min(box.a[1],box.b[1]),y1=Math.max(box.a[1],box.b[1]);box=null;msel.clear();
+  for(const m of marks)if(!m.reg&&m.x>=x0&&m.x<=x1&&m.y>=y0&&m.y<=y1&&!hidP(m))msel.add(m);select(null);flash(msel.size?`${msel.size} item${msel.size>1?'s':''} selected: drag one to move them all, arrow keys nudge, Delete removes, Esc clears.`:'Nothing selected. Shift+drag a box around pins, labels or paths.');return}
+ if(gmv){gmv=null;draw();return}ptr.delete(e.pointerId);if(sv&&sv.live){sv.live=0;surveyShow()}if(bd)finishBld();if(ptr.size<2)pinch=null;if(mv&&mv.moved)select(mv.i);mv=null;if(pd){const m=marks[pd.i];if(pd.moved&&m&&m.pts){const q=m.pts[m.pts.length>>1];m.x=q[0];m.y=q[1];select(pd.i)}pd=null}if(meas){if(meas.live){const d=measTot(),n=(meas.legs||[]).length+1,tr=travel(d),f=v=>(v<10?v.toFixed(1):Math.round(v))+' '+sc.u;if(d>0)flash(n>1?`📏 ${n} legs, ${f(d)} in total.${tr}`:`📏 ${f(d)} as the crow flies.${tr} Shift+drag to add another leg.`,5000)}meas.live=0}if(dr)finishPath();painting=false;if(pan&&pan.rg>=0&&!pan.moved)select(pan.rg);pan=null;if(tool=='pan')cv.style.cursor='grab'};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
 function clampView(){const w=cv.width,h=cv.height;view.x=Math.min(0,Math.max(w-w*view.z,view.x));view.y=Math.min(0,Math.max(h-h*view.z,view.y))}
 function zoomAt(f,sx,sy){const nz=Math.min(10,Math.max(1,view.z*f)),k=nz/view.z;view.x=sx-(sx-view.x)*k;view.y=sy-(sy-view.y)*k;view.z=nz;clampView();$('zl').textContent=Math.round(nz*100)+'%';draw()}
 cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect(),k=cv.width/r.width;zoomAt(e.deltaY<0?1.2:1/1.2,(e.clientX-r.left)*k,(e.clientY-r.top)*k)},{passive:false});
@@ -767,42 +1099,112 @@ function landText(m){const cx=Math.min(W-1,Math.max(0,m.x/S|0)),cy=Math.min(H-1,
  if(nb.length)s+=` Nearby: ${nb.join(' and ')}.`;
  const f=fac[cy*W+cx];return s+(f&&facs[f-1]?` Claimed by ${facs[f-1].n}.`:' No faction claims this land.')}
 function select(i){sel=i;const m=marks[i];$('info').hidden=!m;
- if(m){$('iicon').textContent=m.pts?'〰️':m.reg?(m.i||'🏷️'):m.l?'🔤':m.i;$('iname').value=m.n;$('idesc').value=m.d||'';$('iland').textContent=(m.pts?`${(pp()[m.t]||{}).n||'Path'}, about ${plen(m)} cells (${Math.round(plen(m)*sc.v)} ${sc.u}) long. `:m.reg?regText(m):'')+landText(m)+nearText(m);fillLink(m);$('info').scrollIntoView({block:'nearest'})}
+ if(m){$('iicon').textContent=m.pts?'〰️':m.reg?(m.i||'🏷️'):m.l?'🔤':m.i;$('iname').value=m.n;$('idesc').value=m.d||'';$('iland').textContent=(m.pts?`${(pp()[m.t]||{}).n||'Path'}, about ${plen(m)} cells (${Math.round(plen(m)*sc.v)} ${sc.u}) long.${travel(plen(m)*sc.v,(pp()[m.t]||{}).n)} `:m.reg?regText(m):'')+landText(m)+nearText(m);fillLink(m);$('igm').classList.toggle('on',!!m.gm);const pin=!m.pts&&!m.reg&&!m.l;$('iemo').hidden=!pin;$('ipsz').hidden=!pin;if(pin){$('iemo').value=m.i||'';$('ipsz').value=String(m.ps||1)}$('ilab').hidden=!m.l;if(m.l){$('isz').value=String(m.sz||1);$('irot').value=String(m.rot||0);$('icol').value=m.c||'#ffffff'}
+ const pt=$('iptype');pt.hidden=!m.pts;if(m.pts){pt.innerHTML=pp().map((p,j)=>`<option value="${j}">${esc(p.n)}</option>`).join('');pt.value=pp()[m.t]?m.t:0}$('info').scrollIntoView({block:'nearest'})}
  draw()}
-$('iname').oninput=e=>{if(marks[sel]){marks[sel].n=e.target.value;draw()}};
-$('idesc').oninput=e=>{if(marks[sel])marks[sel].d=e.target.value;touch()};
+// text edits get one undo step per focus, taken on the first keystroke
+let edS=0;for(const id of['iname','idesc','iemo'])$(id).addEventListener('focus',()=>{edS=0});const edSnap=()=>{if(!edS&&marks[sel]){snap();edS=1}};
+$('iname').oninput=e=>{if(marks[sel]){edSnap();marks[sel].n=e.target.value;draw()}};
+$('idesc').oninput=e=>{if(marks[sel]){edSnap();marks[sel].d=e.target.value;touch()}};
+$('iemo').oninput=e=>{const m=marks[sel],v=e.target.value.trim();if(!m||!v||m.pts||m.reg||m.l)return;edSnap();m.i=v;$('iicon').textContent=v;draw()};
+$('isz').onchange=e=>{const m=marks[sel];if(!m||!m.l)return;snap();m.sz=+e.target.value;draw()};
+$('irot').onchange=e=>{const m=marks[sel];if(!m||!m.l)return;snap();m.rot=+e.target.value;draw()};
+$('icol').onclick=()=>{if(marks[sel])snap()};$('icol').oninput=e=>{const m=marks[sel];if(!m||!m.l)return;m.c=e.target.value;draw()};
+$('igm').onclick=()=>{const m=marks[sel];if(!m)return;snap();m.gm=!m.gm||undefined;$('igm').classList.toggle('on',!!m.gm);draw();flash(m.gm?'🔒 GM only: players will not see this in Player view.':'Visible to players again.')};
+$('ipsz').onchange=e=>{const m=marks[sel];if(!m||m.pts||m.reg||m.l)return;snap();m.ps=+e.target.value==1?undefined:+e.target.value;draw()};
+$('iptype').onchange=e=>{const m=marks[sel];if(!m||!m.pts)return;snap();m.t=+e.target.value;select(sel)};
 $('idel').onclick=()=>{if(marks[sel]){snap();marks.splice(sel,1);select(null)}};
 $('iclose').onclick=()=>select(null);
-function draw(){LQ=[];
+// redraws are coalesced to one per frame; the timer covers hosts that pause requestAnimationFrame while hidden
+let dq=0,dqt=0;function draw(){if(dq)return;const f=()=>{if(!dq)return;cancelAnimationFrame(dq);clearTimeout(dqt);dq=0;drawNow()};dq=requestAnimationFrame(f)||1;dqt=setTimeout(f,100)}
+// antique look: desaturate, tint sepia, add paper grain and a burnt vignette; pins and labels are drawn on top afterwards
+function parchment(){const w=cv.width,h=cv.height;ctx.save();ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);
+ ctx.globalCompositeOperation='saturation';ctx.globalAlpha=.6;ctx.fillStyle='#808080';ctx.fillRect(0,0,w,h);
+ ctx.globalAlpha=1;ctx.globalCompositeOperation='screen';ctx.fillStyle='rgba(235,215,175,.28)';ctx.fillRect(0,0,w,h);
+ ctx.globalCompositeOperation='multiply';ctx.fillStyle='#f4dcaa';ctx.fillRect(0,0,w,h);
+ if(tex){ctx.globalCompositeOperation='soft-light';ctx.globalAlpha=.35;ctx.imageSmoothingEnabled=true;ctx.drawImage(tex,-w*.4,-h*.4,w*1.9,h*1.9)}
+ ctx.globalAlpha=1;ctx.globalCompositeOperation='multiply';const g=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.35,w/2,h/2,Math.hypot(w,h)*.56);g.addColorStop(0,'rgba(255,255,255,0)');g.addColorStop(.8,'rgba(200,165,115,.3)');g.addColorStop(1,'rgba(110,70,35,.7)');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+ ctx.restore()}
+// relief: a height field implied by the biomes (mountains high, sea low), blurred, then lit from the north-west and blended in
+const rc=document.createElement('canvas'),HT=[0,.3,.36,.6,1,.32,.55,.26,.38,.3];
+let hfK='',hfH=null;function heightField(){const key=W+'x'+H+':'+arrSum(ter);if(key==hfK)return hfH;hfK=key;const N=W*H,h=new Float32Array(N),t=new Float32Array(N),R=2;
+ for(let i=0;i<N;i++){const b=ter[i];h[i]=(HT[b]==null?.3:HT[b])+(b?(hash((i%W)*7,(i/W|0)*7)-.5)*.14:0)}
+ for(let p=0;p<2;p++){for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0,c=0;for(let k=-R;k<=R;k++){const xx=x+k;if(xx>=0&&xx<W){a+=h[y*W+xx];c++}}t[y*W+x]=a/c}
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){let a=0,c=0;for(let k=-R;k<=R;k++){const yy=y+k;if(yy>=0&&yy<H){a+=t[yy*W+x];c++}}h[y*W+x]=a/c}}
+ return hfH=h}
+// contour lines: marching squares over the height field between cell centres
+function contours(x0,x1,y0,y1){const h=heightField();ctx.save();ctx.setLineDash([]);ctx.lineCap='round';
+ for(const[lv,a]of[[.18,.22],[.34,.3],[.5,.38],[.66,.45],[.82,.5]]){ctx.beginPath();
+  for(let y=Math.max(0,y0-1);y<Math.min(H-1,y1+1);y++)for(let x=Math.max(0,x0-1);x<Math.min(W-1,x1+1);x++){const A=h[y*W+x],B=h[y*W+x+1],C=h[(y+1)*W+x+1],D=h[(y+1)*W+x],k=(A>lv)|(B>lv)<<1|(C>lv)<<2|(D>lv)<<3;if(!k||k==15)continue;
+   const px=(x+.5)*S,py=(y+.5)*S,it=(p,q)=>(lv-p)/(q-p||1e-9),T=[px+it(A,B)*S,py],Rr=[px+S,py+it(B,C)*S],Bt=[px+it(D,C)*S,py+S],L=[px,py+it(A,D)*S],seg=(p,q)=>{ctx.moveTo(p[0],p[1]);ctx.lineTo(q[0],q[1])};
+   switch(k){case 1:case 14:seg(L,T);break;case 2:case 13:seg(T,Rr);break;case 3:case 12:seg(L,Rr);break;case 4:case 11:seg(Rr,Bt);break;case 6:case 9:seg(T,Bt);break;case 7:case 8:seg(L,Bt);break;case 5:seg(L,T);seg(Rr,Bt);break;case 10:seg(T,Rr);seg(L,Bt);break}}
+  ctx.strokeStyle=`rgba(55,38,20,${a})`;ctx.lineWidth=(lv>.6?1.4:1)*ms;ctx.stroke()}ctx.restore()}
+function arrSum(a){let h=a.length;for(let i=0;i<a.length;i++)h=(h*31+a[i]*(i%97+1))|0;return h}
+let rKey='';
+function relief(){const key=W+'x'+H+':'+arrSum(ter);if(key==rKey){ctx.save();ctx.globalCompositeOperation='soft-light';ctx.imageSmoothingEnabled=true;ctx.drawImage(rc,0,0,W*S,H*S);ctx.restore();return}rKey=key;const h=heightField();
+ rc.width=W;rc.height=H;const g=rc.getContext('2d'),im=g.createImageData(W,H),d=im.data;
+ for(let y=0;y<H;y++)for(let x=0;x<W;x++){const i=y*W+x,dx=h[y*W+Math.min(W-1,x+1)]-h[y*W+Math.max(0,x-1)],dy=h[Math.min(H-1,y+1)*W+x]-h[Math.max(0,y-1)*W+x],v=Math.max(0,Math.min(255,128+(dx+dy)*720)),k=i*4;d[k]=d[k+1]=d[k+2]=v;d[k+3]=ter[i]?255:0}
+ g.putImageData(im,0,0);ctx.save();ctx.globalCompositeOperation='soft-light';ctx.imageSmoothingEnabled=true;ctx.drawImage(rc,0,0,W*S,H*S);ctx.restore()}
+// faction names sit on the faction's own cell nearest its centre (never out at sea) and scale with territory size
+let faK='',faC=[];function facAnchors(){const key=W+'x'+H+':'+facs.length+':'+arrSum(fac);if(key==faK)return faC;faK=key;const n=facs.length,sx=new Float64Array(n+1),sy=new Float64Array(n+1),c=new Int32Array(n+1);
+ for(let i=0;i<W*H;i++){const f=fac[i];if(f&&f<=n){sx[f]+=i%W;sy[f]+=i/W|0;c[f]++}}const bd=new Float64Array(n+1).fill(1e18),bi=new Int32Array(n+1).fill(-1);
+ for(let i=0;i<W*H;i++){const f=fac[i];if(!f||f>n)continue;const dx=i%W-sx[f]/c[f],dy=(i/W|0)-sy[f]/c[f],d=dx*dx+dy*dy;if(d<bd[f]){bd[f]=d;bi[f]=i}}
+ faC=facs.map((_,k)=>bi[k+1]<0?null:[(bi[k+1]%W+.5)*S,((bi[k+1]/W|0)+.5)*S,c[k+1]]);return faC}
+const mmc=document.createElement('canvas');
+function drawMini(){mini=null;if(!vis.o||view.z<1.05||rend)return;const k=ms,mw=Math.round(Math.min(cv.width*.2,230*k)),mh=Math.round(mw*H/W),x0=cv.width-mw-12*k,y0=12*k;
+ const mKey=[W,H,arrSum(ter),arrSum(fac),arrSum(fog),vis.f,vis.w,vis.y,BIOMES.map(b=>b[1]).join(),facs.map(f=>f.c).join()].join('|');if(mKey!=drawMini.k){drawMini.k=mKey;mmc.width=W;mmc.height=H;const g=mmc.getContext('2d'),im=g.createImageData(W,H),C=BIOMES.map(b=>[1,3,5].map(j=>parseInt(b[1].slice(j,j+2),16))),FC=facs.map(f=>[1,3,5].map(j=>parseInt(f.c.slice(j,j+2),16)));
+ for(let i=0;i<W*H;i++){let c=C[ter[i]]||C[0];const f=vis.f&&fac[i]&&FC[fac[i]-1];if(f)c=[c[0]*.55+f[0]*.45,c[1]*.55+f[1]*.45,c[2]*.55+f[2]*.45];if(vis.w&&fog[i])c=vis.y?[42,38,32]:[c[0]*.6,c[1]*.6,c[2]*.6];im.data[i*4]=c[0];im.data[i*4+1]=c[1];im.data[i*4+2]=c[2];im.data[i*4+3]=255}
+ g.putImageData(im,0,0)}ctx.setTransform(1,0,0,1,0,0);ctx.setLineDash([]);ctx.fillStyle='rgba(20,17,12,.85)';ctx.fillRect(x0-4*k,y0-4*k,mw+8*k,mh+8*k);ctx.imageSmoothingEnabled=true;ctx.drawImage(mmc,x0,y0,mw,mh);
+ ctx.fillStyle='#fff';for(const m of marks)if(!m.pts&&!m.reg&&!m.l&&!(hidP(m))){ctx.fillRect(x0+m.x/cv.width*mw-1.5*k,y0+m.y/cv.height*mh-1.5*k,3*k,3*k)}
+ const vx=x0+(-view.x/view.z)/cv.width*mw,vy=y0+(-view.y/view.z)/cv.height*mh;ctx.strokeStyle='#ffd24a';ctx.lineWidth=2*k;ctx.strokeRect(vx,vy,mw/view.z,mh/view.z);
+ ctx.strokeStyle='rgba(255,255,255,.4)';ctx.lineWidth=1;ctx.strokeRect(x0-4*k,y0-4*k,mw+8*k,mh+8*k);mini=[x0-4*k,y0-4*k,mw+8*k,mh+8*k]}
+function drawNow(){if(dq){cancelAnimationFrame(dq);clearTimeout(dqt);dq=0}if(vis.y&&marks[sel]&&hidP(marks[sel])){sel=null;$('info').hidden=true}LQ=[];$('undo').disabled=!undos.length;$('redo').disabled=!redos.length;
  ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#14110c';ctx.fillRect(0,0,cv.width,cv.height);ctx.setTransform(view.z,0,0,view.z,view.x,view.y);
  const x0=Math.max(0,Math.floor(-view.x/view.z/S)),x1=Math.min(W,Math.ceil((cv.width-view.x)/view.z/S)),y0=Math.max(0,Math.floor(-view.y/view.z/S)),y1=Math.min(H,Math.ceil((cv.height-view.y)/view.z/S));
  const sm=vis.s&&!M.soft;if(M.soft)soft();else if(sm)drawSmooth(x0,x1,y0,y1);
  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const b=ter[y*W+x],h=hash(x,y);
   if(!M.soft&&!sm){ctx.fillStyle=BIOMES[b][1];ctx.fillRect(x*S,y*S,S,S);ctx.fillStyle=h>.5?'rgba(255,255,255,.07)':'rgba(0,0,0,.07)';ctx.fillRect(x*S,y*S,S,S)}
   deco(BIOMES[b][2],x*S+S/2+(h-.5)*4,y*S+S/2+(hash(y,x)-.5)*4,h)}
+ if(vis.h&&(mode=='fantasy'||mode=='planet'))relief();
+ if(vis.c&&(mode=='fantasy'||mode=='planet'))contours(x0,x1,y0,y1);
  if(M.cliff)for(let y=y0;y<Math.min(y1,H-1);y++)for(let x=x0;x<x1;x++){const q=ter[y*W+x];if(q>=3&&q<=6){const u=ter[(y+1)*W+x];if(u<3||u>6){ctx.fillStyle='rgba(70,52,38,.9)';ctx.fillRect(x*S,(y+1)*S,S,5)}}}
+ if(trImg&&!rend){const iw=trImg.naturalWidth,ih=trImg.naturalHeight,f=Math.min(W*S/iw,H*S/ih);ctx.globalAlpha=+$('trop').value/100;ctx.imageSmoothingEnabled=true;ctx.drawImage(trImg,(W*S-iw*f)/2,(H*S-ih*f)/2,iw*f,ih*f);ctx.globalAlpha=1}
  // factions
  const sum=facs.map(()=>[0,0,0]);
  if(sm&&vis.f){const L=facs.map(()=>[]);for(let y=0;y<H;y++)for(let x=0;x<W;x++){const f=fac[y*W+x];if(!f||!facs[f-1])continue;L[f-1].push(x,y);const q=sum[f-1];q[0]+=x;q[1]+=y;q[2]++}
-  L.forEach((l,i)=>{if(!l.length)return;ctx.fillStyle=facs[i].c+'59';ctx.shadowColor=facs[i].c;ctx.shadowBlur=5;ctx.beginPath();for(let j=0;j<l.length;j+=2){const cx=(l[j]+.5)*S,cy=(l[j+1]+.5)*S,r=S*.72;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}ctx.fill()});ctx.shadowBlur=0;ctx.shadowColor='transparent'}
+  L.forEach((l,i)=>{if(!l.length)return;ctx.fillStyle=facs[i].c+'59';ctx.shadowColor=facs[i].c;ctx.shadowBlur=5;ctx.beginPath();for(let j=0;j<l.length;j+=2){const cx=(l[j]+.5)*S,cy=(l[j+1]+.5)*S,r=S*.72;ctx.moveTo(cx+r,cy);ctx.arc(cx,cy,r,0,7)}ctx.fill()});ctx.shadowBlur=0;ctx.shadowColor='transparent';
+  // dashed borders along the edge of each territory
+  const E=facs.map(()=>[]);for(let y=Math.max(0,y0-1);y<Math.min(H,y1+1);y++)for(let x=Math.max(0,x0-1);x<Math.min(W,x1+1);x++){const f=fac[y*W+x];if(!f||!facs[f-1])continue;const e=E[f-1],X=x*S,Y=y*S;
+   const bd=j=>fac[j]!=f&&(mode=='space'||ter[j]!=0);if(x<W-1&&bd(y*W+x+1))e.push(X+S,Y,X+S,Y+S);if(x>0&&bd(y*W+x-1))e.push(X,Y,X,Y+S);if(y<H-1&&bd((y+1)*W+x))e.push(X,Y+S,X+S,Y+S);if(y>0&&bd((y-1)*W+x))e.push(X,Y,X+S,Y)}
+  ctx.lineCap='round';E.forEach((e,i)=>{if(!e.length)return;ctx.beginPath();for(let k=0;k<e.length;k+=4){ctx.moveTo(e[k],e[k+1]);ctx.lineTo(e[k+2],e[k+3])}ctx.setLineDash([]);ctx.strokeStyle='rgba(0,0,0,.35)';ctx.lineWidth=3.2*ms;ctx.stroke();ctx.setLineDash([5*ms,4*ms]);ctx.strokeStyle=facs[i].c;ctx.lineWidth=1.8*ms;ctx.stroke()});ctx.setLineDash([])}
  else for(let y=0;y<H;y++)for(let x=0;x<W;x++){const f=fac[y*W+x];if(!f||!facs[f-1]||!vis.f)continue;
   ctx.fillStyle=facs[f-1].c+'66';ctx.fillRect(x*S,y*S,S,S);const s=sum[f-1];s[0]+=x;s[1]+=y;s[2]++;
   ctx.fillStyle=facs[f-1].c;ctx.lineWidth=0;
   if(x==W-1||fac[y*W+x+1]!=f)ctx.fillRect(x*S+S-2,y*S,2,S);if(x==0||fac[y*W+x-1]!=f)ctx.fillRect(x*S,y*S,2,S);
   if(y==H-1||fac[(y+1)*W+x]!=f)ctx.fillRect(x*S,y*S+S-2,S,2);if(y==0||fac[(y-1)*W+x]!=f)ctx.fillRect(x*S,y*S,S,2)}
  ctx.textAlign='center';ctx.textBaseline='middle';
- sum.forEach((s,i)=>{if(s[2]>6)lbl(facs[i].n.toUpperCase(),(s[0]/s[2]+.5)*S,(s[1]/s[2]+.5)*S,15*ms,'#fff',{sp:1,pr:7,kind:'fac'})});
+ if(vis.f)facAnchors().forEach((q,i)=>{if(q&&q[2]>6&&facs[i]&&!(vis.y&&fogAt(q[0],q[1])))lbl(facs[i].n.toUpperCase(),q[0],q[1],Math.max(11,Math.min(26,8+Math.sqrt(q[2])*.45))*ms,'#fff',{sp:1,pr:7,kind:'fac',f:i+1})});
  if(grid)drawGrid();
- for(const m of marks)if(m.reg&&vis.r)drawReg(m,m===marks[sel]);
- for(const m of marks)if(m.pts&&vis.p){drawPath(m,m===marks[sel]);if(vis.n&&m.n&&(!M.lod||view.z>=1.6))lbl(m.n,m.x,m.y,13*ms,'#fff',{it:1,pr:5,kind:'path',pts:m.pts})}
- for(const m of marks){if(m.pts||m.reg)continue;if(m.l){if(vis.n)lbl(m.n,m.x,m.y,17*ms,'#fff',{it:1,pr:1,kind:'area'});continue}
-  if(!vis.m)continue;ctx.font=26*ms+'px serif';ctx.fillStyle='#000';ctx.fillText(m.i,m.x,m.y);if(m.link&&maps.some(x=>x.id==m.link)){ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(m.x+13*ms,m.y-13*ms,5*ms,0,7);ctx.fill();ctx.fillStyle='#000';ctx.font=7*ms+'px sans-serif';ctx.fillText('↗',m.x+13*ms,m.y-12.5*ms)}if(vis.n&&m.n&&(!M.lod||view.z>=1.6||marks[sel]===m))lbl(m.n,m.x,m.y,13*ms,'#fff',{pr:marks[sel]===m?0:3,kind:'pin'})}
- if(marks[sel]&&!marks[sel].pts&&!marks[sel].reg){const m=marks[sel];ctx.strokeStyle='#ffd24a';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(m.x,m.y,(m.l?10:20)*ms,0,7);ctx.stroke()}
- flushLabels();if(meas)drawMeas();if(bd)drawBd();if(sv)drawSv();if(legend)drawLegend();if(vis.k)drawFrame();globe();touch()}
+ for(const m of marks)if(m.reg&&vis.r&&!(vis.y&&m.gm))drawReg(m,m===marks[sel]);
+ for(const m of marks)if(m.pts&&vis.p&&!(vis.y&&m.gm)){drawPath(m,m===marks[sel]);if(vis.n&&m.n&&(!M.lod||view.z>=1.6)&&!(hidP(m)))lbl(m.n,m.x,m.y,13*ms,'#fff',{it:1,pr:5,kind:'path',pts:m.pts})}
+ if(vis.a)parchment();
+ if(vis.m)drawParty();
+ for(const m of marks){if(m.pts||m.reg||(hidP(m)))continue;if(m.l){if(vis.n)lbl(m.n,m.x,m.y,17*ms*(m.sz||1),m.c||'#fff',{it:1,pr:1,kind:'area',rot:(m.rot||0)*Math.PI/180});continue}
+  if(!vis.m)continue;ctx.font=26*ms*(m.ps||1)+'px serif';ctx.fillStyle='#000';ctx.fillText(m.i,m.x,m.y);if(m.gm){ctx.font=11*ms+'px serif';ctx.fillText('🔒',m.x-13*ms,m.y-12*ms)}if(m.link&&maps.some(x=>x.id==m.link)){ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(m.x+13*ms,m.y-13*ms,5*ms,0,7);ctx.fill();ctx.fillStyle='#000';ctx.font=7*ms+'px sans-serif';ctx.fillText('↗',m.x+13*ms,m.y-12.5*ms)}if(vis.n&&m.n&&(!M.lod||view.z>=1.6||marks[sel]===m))lbl(m.n,m.x,m.y,13*ms,'#fff',{pr:marks[sel]===m?0:3,kind:'pin'})}
+ if(marks[sel]&&!marks[sel].pts&&!marks[sel].reg){const m=marks[sel];ctx.strokeStyle='#ffd24a';ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(m.x,m.y,(m.l?10:20*(m.ps||1))*ms,0,7);ctx.stroke()}
+ if(msel.size){ctx.setLineDash([4*ms,3*ms]);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2*ms;for(const m of msel){if(m.pts)drawPath(m,1);ctx.setLineDash([4*ms,3*ms]);ctx.strokeStyle='#ffd24a';ctx.lineWidth=2*ms;ctx.beginPath();ctx.arc(m.x,m.y,(m.l?12:17)*ms,0,7);ctx.stroke()}ctx.setLineDash([])}
+ flushLabels();drawFog(x0,x1,y0,y1);if(box){const bx=Math.min(box.a[0],box.b[0]),by=Math.min(box.a[1],box.b[1]);ctx.setLineDash([6,4]);ctx.strokeStyle='#ffd24a';ctx.fillStyle='rgba(255,210,74,.1)';ctx.lineWidth=1.5/view.z;ctx.fillRect(bx,by,Math.abs(box.b[0]-box.a[0]),Math.abs(box.b[1]-box.a[1]));ctx.strokeRect(bx,by,Math.abs(box.b[0]-box.a[0]),Math.abs(box.b[1]-box.a[1]));ctx.setLineDash([])}if(rt){ctx.setLineDash([4,6]);ctx.strokeStyle='rgba(255,210,74,.8)';ctx.lineWidth=2*ms;ctx.beginPath();ctx.moveTo(rt.a[0],rt.a[1]);ctx.lineTo(rt.b[0],rt.b[1]);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#ffd24a';ctx.beginPath();ctx.arc(rt.a[0],rt.a[1],5*ms,0,7);ctx.fill()}if(meas)drawMeas();if(bd)drawBd();if(sv)drawSv();if(legend)drawLegend();if(vis.k)drawFrame();drawMini();globe();touch()}
 function text(t,x,y,sz,col,sp,it){if(!t)return;ctx.font=`${it?'italic ':'bold '}${sz}px Georgia,serif`;
  if(sp)t=t.split('').join('\u200a');ctx.lineWidth=4;ctx.strokeStyle='rgba(0,0,0,.75)';ctx.lineJoin='round';ctx.strokeText(t,x,y);ctx.fillStyle=col;ctx.fillText(t,x,y)}
 $('hint').textContent=HINT;applyMode('fantasy');setDims(96,60);generate();renderTabs();
-try{const au=localStorage.getItem(K+'__auto');if(au)loadProject(JSON.parse(au))}catch(e){}
+let fresh=1;try{const au=localStorage.getItem(K+'__auto');if(au){loadProject(JSON.parse(au));fresh=0}}catch(e){}
+// first visit: offer a few starting points instead of dropping people into a blank editor
+try{if(fresh&&!localStorage.getItem(K+'__seen')){const B=(a,t,d)=>`<button data-wl="${a}" style="width:100%;margin-bottom:6px;flex-direction:column;align-items:flex-start"><b>${t}</b><span style="font-size:12px;opacity:.8">${d}</span></button>`;
+ $('fbox').innerHTML=`<div class="ihead"><b style="flex:1;font-size:18px">🗺️ Welcome to Map Maker</b><button data-wl="close">✕</button></div><p style="margin:0 0 10px">Build worlds, planets, star maps and towns. Everything saves in this browser as you go. How would you like to start?</p>`+
+  B('quick','🌍 Quick fantasy world','Terrain, rivers, kingdoms, towns, roads and names, generated in one click.')+B('demo','📜 Explore the demo','A fan-made Westeros with a linked King’s Landing city map.')+B('space','🌌 A star map','Nebulae, star systems and hyperlanes.')+B('town','🏘️ A settlement','A medieval town with districts and venues.')+B('close','✏️ Start from this random map','Paint, place pins and draw paths yourself.')+
+  '<div style="font-size:12px;opacity:.75;margin-top:4px">Press ? at any time for keyboard shortcuts.</div>';$('fmodal').hidden=false}}catch(e){}
+$('fbox').addEventListener('click',e=>{const b=e.target.closest('[data-wl]');if(!b)return;e.stopPropagation();try{localStorage.setItem(K+'__seen','1')}catch(x){}$('fmodal').hidden=true;const a=b.dataset.wl;
+ if(a=='quick')$('qworld').click();else if(a=='demo'){buildWesteros();flash("Loaded a fan-made Westeros with a linked King's Landing map.")}else if(a=='space'||a=='town'){snap();applyMode(a);setDims(W,H);generate();if(a=='town'){autoDistricts(1);populate(1)}ui()}});
 
 }
 class FantasyMapMaker extends HTMLElement{connectedCallback(){if(this._mm)return;this._mm=1;const r=this.attachShadow({mode:'open'});r.appendChild(document.getElementById('mm-tpl').content.cloneNode(true));run(this,r,r.getElementById('app'))}}
