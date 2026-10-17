@@ -6,8 +6,13 @@
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 html,body{margin:0;background:#14110c}
-fantasy-map-maker{display:block;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+fantasy-map-maker{display:block;height:calc(100vh - 36px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));height:calc(100dvh - 36px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px))}
+.back-bar{box-sizing:border-box;height:36px;display:flex;align-items:center;padding:0 16px;background:#0d0907;border-bottom:1px solid #d4a548;font:14px/1 'Share Tech Mono',ui-monospace,Consolas,monospace;letter-spacing:.14em;text-transform:uppercase}
+.back-bar a{color:#d4a548;text-decoration:none;padding:6px 0}
+.back-bar a:hover{color:#e6d9c3}
+.back-bar a:focus-visible{outline:2px solid #8fdc6a;outline-offset:3px}
 </style></head><body>
+<nav class="back-bar" aria-label="Portfolio"><a href="index.html">← Back to portfolio</a></nav>
 <fantasy-map-maker></fantasy-map-maker>
 <template id="mm-tpl"><style>
 :host{display:block;height:780px}
