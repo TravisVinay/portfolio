@@ -1,0 +1,17 @@
+{
+  "name": "travisvinay",
+  "owner": {
+    "name": "Travis Vinay",
+    "url": "https://github.com/TravisVinay"
+  },
+  "description": "Claude Code plugins by Travis Vinay.",
+  "plugins": [
+    {
+      "name": "study-skills",
+      "source": "./claude-skills",
+      "description": "Turn class notes into study guides and get quizzed on them, with weak spots tracked between sessions.",
+      "category": "education",
+      "tags": ["study", "quiz", "students", "notes"]
+    }
+  ]
+}

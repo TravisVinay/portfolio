@@ -1,6 +1,6 @@
 # Study Skills for Claude Code
 
-Two slash commands that turn your class notes into study material and then quiz you on it:
+Two slash commands that turn your class notes into study material and then quiz you on it. The examples below use the short names. If you installed the plugin, type `/study-skills:study-guide` and `/study-skills:quiz-me` instead (see [Installation](#installation)).
 
 | Command | What it does |
 |---------|--------------|
@@ -19,23 +19,52 @@ They work well together:
 
 ## Installation
 
-These are [Claude Code skills](https://docs.claude.com/en/docs/claude-code/skills). Each one is a folder with a `SKILL.md` file in it.
+### As a plugin (recommended)
+
+In Claude Code, run:
 
 ```
-~/.claude/skills/
-├── README.md
-├── study-guide/
-│   └── SKILL.md
-└── quiz-me/
-    └── SKILL.md
+/plugin marketplace add TravisVinay/portfolio
+/plugin install study-skills@travisvinay
 ```
 
-- **Every project (personal):** put both folders in `~/.claude/skills/`. On Windows, that's `C:\Users\<you>\.claude\skills\`.
-- **One project only:** put them in `<project>/.claude/skills/` instead.
+On Claude Code 2.1.275 or later, one line does both:
 
-Then start a new Claude Code session. The commands appear in the `/` menu.
+```
+/plugin install study-skills --marketplace TravisVinay/portfolio
+```
 
-**Optional:** reading `.pptx` and `.docx` files needs `pip install python-pptx python-docx`. PDFs, Markdown, and text files need nothing extra.
+From a terminal instead:
+
+```bash
+claude plugin marketplace add TravisVinay/portfolio
+claude plugin install study-skills@travisvinay
+```
+
+Plugin skills are namespaced, so the commands are **`/study-skills:study-guide`** and **`/study-skills:quiz-me`**. You can also just ask ("make a study guide from lecture5.pdf", "quiz me on my notes") and Claude will use them. To get updates later, run `/plugin marketplace update travisvinay`.
+
+### Manually (shorter command names)
+
+Copy the two folders from [`skills/`](skills) into `~/.claude/skills/` (on Windows, `C:\Users\<you>\.claude\skills\`), or into `<project>/.claude/skills/` for one project only. Then start a new Claude Code session. This way the commands are plain `/study-guide` and `/quiz-me`, but you won't get updates automatically.
+
+### Optional
+
+Reading `.pptx` and `.docx` files needs `pip install python-pptx python-docx`. PDFs, Markdown, and text files need nothing extra.
+
+### Plugin layout
+
+```
+portfolio/
+├── .claude-plugin/
+│   └── marketplace.json      # lists the study-skills plugin
+└── claude-skills/            # the plugin
+    ├── .claude-plugin/
+    │   └── plugin.json
+    ├── README.md
+    └── skills/
+        ├── study-guide/SKILL.md
+        └── quiz-me/SKILL.md
+```
 
 ---
 
@@ -125,9 +154,9 @@ The next time you run `/quiz-me` on the same material, it reads this file and pu
 
 Each skill is a plain Markdown file of instructions, so you can change its behavior by editing it:
 
-- **Change the study guide layout:** edit the template in `study-guide/SKILL.md` (step 2).
-- **Change quiz defaults** (question count, difficulty, question types): edit `quiz-me/SKILL.md` (steps 1–2).
-- **Make grading stricter or looser:** edit the "Grade each answer" section in `quiz-me/SKILL.md`.
+- **Change the study guide layout:** edit the template in `skills/study-guide/SKILL.md` (step 2).
+- **Change quiz defaults** (question count, difficulty, question types): edit `skills/quiz-me/SKILL.md` (steps 1–2).
+- **Make grading stricter or looser:** edit the "Grade each answer" section in `skills/quiz-me/SKILL.md`.
 
 ---
 

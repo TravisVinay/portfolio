@@ -1,7 +1,7 @@
 ---
 name: study-guide
 description: Turn lecture notes, slides, readings, or a topic into an exam-ready study guide saved as a Markdown file. Use when the user asks for a study guide, review sheet, or exam prep from their notes.
-argument-hint: <file, folder, or topic> [focus: e.g. "midterm 2", "chapters 3-5"]
+argument-hint: '<file, folder, or topic> [focus, e.g. "midterm 2" or "chapters 3-5"]'
 ---
 
 # Study guide

@@ -1,7 +1,7 @@
 ---
 name: quiz-me
 description: Interactively quiz the user on their notes, a study guide, or a topic, one question at a time, adapting to weak spots and tracking results across sessions. Use when the user wants to be quizzed, tested, or drilled.
-argument-hint: <file, folder, or topic> [number of questions] [easy|medium|hard|mixed]
+argument-hint: '<file, folder, or topic> [number of questions] [easy|medium|hard|mixed]'
 ---
 
 # Quiz me
