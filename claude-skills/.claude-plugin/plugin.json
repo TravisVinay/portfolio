@@ -1,7 +1,7 @@
 {
   "name": "study-skills",
   "description": "Turn class notes into study guides and get quizzed on them, with weak spots tracked between sessions.",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": {
     "name": "Travis Vinay",
     "url": "https://github.com/TravisVinay"

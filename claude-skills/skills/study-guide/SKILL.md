@@ -10,7 +10,7 @@ Make a study guide from: **$ARGUMENTS**
 
 ## 1. Gather the material
 
-- If the arguments name a **file** (PDF, .md, .txt, .docx, .pptx, code), read it all. For a long PDF, read it in page ranges until you've covered everything.
+- If the arguments name a **file** (PDF, .md, .txt, .docx, .pptx, code), or the user attached files to the chat, read them all. For a long PDF, read it in page ranges until you've covered everything.
 - If they name a **folder**, list it and read every notes-like file in it (skip binaries and build output).
 - `.pptx` / `.docx`: extract the text with a short Python script (`python-pptx` / `python-docx`). If those libraries are missing, ask the user to export the file as a PDF instead of guessing what's in it.
 - If the arguments are just a **topic** with no file, ask the user once whether they have notes for it. If they don't, write the guide from general knowledge and say so at the top.
@@ -66,5 +66,6 @@ Make it scannable: short paragraphs, bold the key words, no filler. Length shoul
 ## 3. Save and report
 
 - Save it as `<source-name>-study-guide.md` next to the source file. If the source was a folder, save it inside that folder. If the source was only a topic, save it in the current working directory.
+- If the notes were attached to a chat rather than read from the user's computer (as on claude.ai), create `<source-name>-study-guide.md` as a file the user can download instead.
 - If a file with that name already exists, ask before overwriting it.
 - In chat, give the file path, list the sections that are in it, and point out anything flagged with ⚠️. Mention that `/quiz-me <that file>` will quiz them on it.

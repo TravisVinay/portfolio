@@ -10,9 +10,13 @@ Quiz the user on: **$ARGUMENTS**
 
 ## 1. Set up
 
-- Read the source material (file, folder, or a `*-study-guide.md`) the same way you'd read notes: all of it, including every page of a PDF. For a bare topic with no file, quiz from general knowledge at an intro-course level unless told otherwise.
+- Read the source material (a file, folder, `*-study-guide.md`, or files attached to the chat) the same way you'd read notes: all of it, including every page of a PDF. For a bare topic with no file, quiz from general knowledge at an intro-course level unless told otherwise.
 - **Defaults:** 10 questions, `mixed` difficulty. The arguments can override both (e.g. `notes.pdf 5 hard`).
-- **Check history:** look for `quiz-results.md` in the same folder as the source (or in the current directory if the source was a topic). If it exists, read the most recent entries for this topic and put more questions on the concepts listed as weak there, about half the quiz.
+- **Check history:** look for past results in either of these places:
+  - a `quiz-results.md` file in the same folder as the source (or in the current directory if the source was a topic), or
+  - a **progress note** the user pasted or attached in the chat (a block that starts with `QUIZ PROGRESS NOTE`).
+
+  If you find either, read the most recent entries for this topic and put more questions on the concepts listed as weak there, about half the quiz.
 - Tell the user in one line what you're quizzing on, how many questions there are, and what you're focusing on (e.g. "focusing on X and Y, which you missed last time"). Then ask question 1 right away.
 
 ## 2. Ask one question at a time
@@ -52,7 +56,7 @@ When the quiz ends, show:
 - ⚠️ **Review:** the concepts they missed or were shaky on, each with a one-line reminder of the key idea
 - One concrete suggestion for what to study next
 
-Then append an entry to `quiz-results.md` (create the file if it doesn't exist) in this format:
+Then save the results so the next quiz can focus on weak spots. Use this entry format:
 
 ```markdown
 ## <date> · <topic / source file> · <score>/<total> · <difficulty>
@@ -61,4 +65,13 @@ Then append an entry to `quiz-results.md` (create the file if it doesn't exist) 
 - Missed: <one short line per missed question>
 ```
 
-Tell them the results were saved and that next time `/quiz-me` will focus on their weak spots.
+**If the notes are files on the user's computer** (for example, in Claude Code): append the entry to `quiz-results.md` next to the source, creating the file if it doesn't exist. Tell the user the results were saved and that the next quiz will focus on their weak spots.
+
+**Otherwise** (the notes were attached to a chat, as on claude.ai, or you can't save files that will still be there next time): don't write a file. Instead, end with a progress note in a code block so it's easy to copy. Include the new entry plus the entries from any note they pasted at the start, keeping the 5 most recent:
+
+```
+QUIZ PROGRESS NOTE: paste this at the start of your next quiz
+<entries, newest first>
+```
+
+Tell the user to save the note somewhere (a notes app or a text file) and paste it in, along with their notes, the next time they ask to be quizzed, so the quiz can focus on what they missed.
