@@ -346,8 +346,19 @@ var ARTIFACTS = [
     how: 'Each skill is a Markdown file of instructions that Claude Code loads when I type the command. I described what I wanted each one to do, Claude wrote the instructions and a README. This repository also works as a Claude Code plugin marketplace, so anyone can install both skills with /plugin marketplace add TravisVinay/portfolio and then /plugin install study-skills@travisvinay.',
     learned: 'A skill is just a well-written prompt saved where it can be reused, so the work is in being precise: what to read, what format to produce, and what not to do, such as never revealing an answer before I try. Saving quiz results to a file is what lets the quiz improve over time.'
   },
-  { id: '04', title: 'Awaiting Data', status: 'pending', type: 'To be added', tools: 'To be added', date: 'Pending',
-    summary: 'Reserved for a future project. Details will appear here once it is complete.' },
+  {
+    id: '04',
+    title: 'TeachBack',
+    status: 'pending',
+    type: 'Team web app (in development)',
+    tools: 'Claude Code, Next.js, TypeScript, Claude API',
+    date: '2026-10-30',
+    link: 'https://github.com/jbarra2/teachback/issues?q=is%3Aissue+assignee%3ATravisVinay',
+    summary: 'A team app where students upload lecture notes, explain concepts in their own words, and get feedback grounded in their notes. I own the frontend.',
+    what: 'TeachBack is notes that teach you back. Students upload lecture notes, the app pulls out the key concepts, and then it asks them to explain each one in their own words. The Claude API grades the explanation with feedback that quotes the student\'s own notes and says when it is not sure. A concept map shows what is mastered, what needs review, and what needs practice, and a "Practice weakest" button picks the next concept to work on.',
+    how: 'We are building it as a team of three, with a lead for the platform and data, one person on the AI grading, and me on the frontend. My tasks cover every screen: the app shell and sign-in pages, the notes library and upload, the practice session, the feedback display, the concept map, the mastery logic, and a final accessibility pass. Work is tracked as GitHub issues against a shared plan and API contract, and we use Claude Code throughout. The launch button shows the issues assigned to me.',
+    learned: ''
+  },
   { id: '05', title: 'Awaiting Data', status: 'pending', type: 'To be added', tools: 'To be added', date: 'Pending',
     summary: 'Reserved for a future project. Details will appear here once it is complete.' }
 ];
