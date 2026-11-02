@@ -183,8 +183,11 @@ dialog.detail::backdrop { background: rgba(5, 3, 2, 0.85); }
 .d-sec h4 { font-family: var(--font-mono); font-weight: 400; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brass); margin: 0 0 6px; }
 .d-sec p { margin: 0; max-width: 62ch; }
 .d-sec p.todo { color: var(--muted); font-style: italic; }
-.launch { display: inline-block; margin: 0 0 24px; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); background: var(--red); border: 1px solid var(--brass); text-decoration: none; padding: 10px 16px; }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }
+.launch { display: inline-block; margin: 0; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); background: var(--red); border: 1px solid var(--brass); text-decoration: none; padding: 10px 16px; }
 .launch:hover { background: #d0362b; color: #fff; }
+.source { display: inline-block; font-family: var(--font-mono); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--brass); background: transparent; border: 1px solid var(--brass); text-decoration: none; padding: 10px 16px; }
+.source:hover { background: var(--panel-hi); color: var(--text); }
 
 @media (max-width: 720px) {
   .hero { padding-block: 48px 32px; overflow: hidden; }
@@ -298,7 +301,10 @@ dialog.detail::backdrop { background: rgba(5, 3, 2, 0.85); }
       <div><dt>Logged</dt><dd id="d-date"></dd></div>
       <div><dt>Status</dt><dd id="d-status-long"></dd></div>
     </dl>
-    <a class="launch" id="d-launch" href="#" hidden>Awaken machine spirit →</a>
+    <div class="actions" id="d-actions">
+      <a class="launch" id="d-launch" href="#" hidden>Awaken machine spirit →</a>
+      <a class="source" id="d-github" href="#" target="_blank" rel="noopener" hidden>Source on GitHub ↗</a>
+    </div>
     <div class="d-sec"><h4>What it is</h4><p id="d-what"></p></div>
     <div class="d-sec"><h4>How it was made</h4><p id="d-how"></p></div>
     <div class="d-sec"><h4>What I learned</h4><p id="d-learned"></p></div>
@@ -306,7 +312,7 @@ dialog.detail::backdrop { background: rgba(5, 3, 2, 0.85); }
 </dialog>
 
 <script>
-/* To add or update a project, edit this list. Set status to "online" when it is finished, and add link to show a launch button. */
+/* To add or update a project, edit this list. Set status to "online" when it is finished, add link to show a launch button, and add github to show a "Source on GitHub" button. */
 var ARTIFACTS = [
   {
     id: '01',
@@ -315,6 +321,7 @@ var ARTIFACTS = [
     type: 'Website',
     tools: 'Claude, HTML, CSS, JavaScript',
     date: '2026-10-09',
+    github: 'https://github.com/TravisVinay/portfolio',
     summary: 'The page you are on. A single front-end site that catalogs my projects.',
     what: 'A one-page portfolio with a card for each project, a detail view for each card, and an About section. It has no server and no database, so everything runs in the browser.',
     how: 'I described the goal in plain language: a distinct look without any artwork, clickable project cards, and a short About section. Claude wrote the page, and I update the list of projects at the top of its script as new work is finished.',
@@ -328,6 +335,7 @@ var ARTIFACTS = [
     tools: 'Claude, HTML, Canvas, JavaScript',
     date: '2026-10-17',
     link: 'map-maker.html',
+    github: 'https://github.com/TravisVinay/portfolio/blob/main/map-maker.html',
     summary: 'A browser tool for building and running fantasy worlds: generated terrain, rivers, roads, factions and lore, plus fog of war and travel tools for tabletop games.',
     what: 'An interactive map editor that runs entirely in the browser. You can generate a world from a seed or paint it by hand, with rivers, lakes, relief shading, contour lines and named terrain features. Roads and sea lanes follow the terrain, and an auto-route tool plans paths between places. Factions get borders, and an "advance 10 years" button simulates how those borders shift. For running a game there is fog of war with a separate player view, GM-only pins, a party token that leaves a travel trail and journey log, a dice roller, and generators for NPCs, encounters and weather. A project holds several linked maps with cross-map search, lore, notes and a globe preview. Maps export as high-resolution PNGs, JSON or an interactive web page, and work is saved automatically with backups.',
     how: 'I built it with Claude over a series of prompts, adding one feature at a time: the painting canvas first, then landmarks, paths, factions, lore and the globe view. A second round of improvements added world generation, terrain-aware routing, fog of war and the game-running tools. It is a single self-contained HTML file with no libraries or server.',
@@ -341,6 +349,7 @@ var ARTIFACTS = [
     tools: 'Claude Code, Markdown',
     date: '2026-10-22',
     link: 'https://github.com/TravisVinay/portfolio/blob/main/claude-skills/README.md',
+    github: 'https://github.com/TravisVinay/portfolio/tree/main/claude-skills',
     summary: 'Two slash commands for studying: /study-guide turns class notes into an exam-ready guide, and /quiz-me quizzes me on it and remembers my weak spots.',
     what: 'A pair of Claude Code skills. /study-guide reads notes, slides or readings (PDF, PowerPoint, Word or text) and writes a study guide with key concepts, a terms table, formulas, common mistakes, likely exam questions, practice problems and an answer key. /quiz-me asks one question at a time, mixes short answer, multiple choice and apply-it questions, grades on understanding rather than exact wording, and supports hint, skip and stop. After each quiz it logs my score and weak concepts to a file, and the next quiz on the same material focuses on what I missed.',
     how: 'Each skill is a Markdown file of instructions that Claude Code loads when I type the command. I described what I wanted each one to do, Claude wrote the instructions and a README. This repository also works as a Claude Code plugin marketplace, so anyone can install both skills with /plugin marketplace add TravisVinay/portfolio and then /plugin install study-skills@travisvinay.',
@@ -354,6 +363,7 @@ var ARTIFACTS = [
     tools: 'Claude Code, Next.js, TypeScript, Claude API',
     date: '2026-10-30',
     link: 'https://github.com/jbarra2/teachback/issues?q=is%3Aissue+assignee%3ATravisVinay',
+    github: 'https://github.com/jbarra2/teachback',
     summary: 'A team app where students upload lecture notes, explain concepts in their own words, and get feedback grounded in their notes. I own the frontend.',
     what: 'TeachBack is notes that teach you back. Students upload lecture notes, the app pulls out the key concepts, and then it asks them to explain each one in their own words. The Claude API grades the explanation with feedback that quotes the student\'s own notes and says when it is not sure. A concept map shows what is mastered, what needs review, and what needs practice, and a "Practice weakest" button picks the next concept to work on.',
     how: 'We are building it as a team of three, with a lead for the platform and data, one person on the AI grading, and me on the frontend. My tasks cover every screen: the app shell and sign-in pages, the notes library and upload, the practice session, the feedback display, the concept map, the mastery logic, and a final accessibility pass. Work is tracked as GitHub issues against a shared plan and API contract, and we use Claude Code throughout. The launch button shows the issues assigned to me.',
@@ -439,6 +449,10 @@ var ARTIFACTS = [
     var launch = document.getElementById('d-launch');
     launch.hidden = !a.link;
     if (a.link) { launch.href = a.link; }
+    var source = document.getElementById('d-github');
+    source.hidden = !a.github;
+    if (a.github) { source.href = a.github; }
+    document.getElementById('d-actions').hidden = !a.link && !a.github;
     dlg.scrollTop = 0;
     if (typeof dlg.showModal === 'function') { dlg.showModal(); } else { dlg.setAttribute('open', ''); }
   }
